@@ -16,4 +16,8 @@ spring:
         format_sql: true
   sql:
     init:
-      mode: never
+      mode: always
+  security:
+    user:
+      name: root
+      password: root
