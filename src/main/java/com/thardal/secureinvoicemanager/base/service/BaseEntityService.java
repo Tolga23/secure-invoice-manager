@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class BaseEntityService <E extends BaseEntity, D extends JpaRepository<E,Long>> {
+public abstract class BaseEntityService <E extends BaseEntity, D extends JpaRepository<E,Long>> {
 
     private final D dao;
 
@@ -32,6 +32,10 @@ public class BaseEntityService <E extends BaseEntity, D extends JpaRepository<E,
 
     public void delete(E entity){
         dao.delete(entity);
+    }
+
+    public D getDao(){
+        return dao;
     }
 
 }
