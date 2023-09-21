@@ -1,10 +1,10 @@
 package com.thardal.secureinvoicemanager.user.repository;
 
-import com.thardal.secureinvoicemanager.user.entity.User;
+import com.thardal.secureinvoicemanager.user.entity.UserVerification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserVerificationRepository extends JpaRepository<UserVerification, Long> {
 
 }

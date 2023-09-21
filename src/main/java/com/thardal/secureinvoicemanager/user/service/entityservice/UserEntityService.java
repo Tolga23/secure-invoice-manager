@@ -12,7 +12,4 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
         super(dao);
     }
 
-    public boolean existsByEmail(String email) {
-        return getDao().existsByEmail(email);
-    }
 }

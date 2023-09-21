@@ -6,7 +6,9 @@ import com.thardal.secureinvoicemanager.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -19,7 +21,11 @@ public class UserController {
     public ResponseEntity findAll(){
         List<UserDto> userDtoList = userService.findAll();
 
-        return ResponseEntity.ok(userDtoList);
+        return ResponseEntity.created(getUri()).body(userDtoList);
+    }
+
+    private URI getUri() {
+        return URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString());
     }
 
     @PostMapping
@@ -29,3 +35,5 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 }
+
+

@@ -34,7 +34,7 @@ public class User extends BaseEntity {
 
     @NotEmpty(message = "Email cannot be empty")
     @Email(message = "Invalid email. Please enter a valid email address")
-    @Column(name = "EMAIL", nullable = false)
+    @Column(name = "EMAIL", nullable = false, unique = true)
     private String email;
 
     @NotEmpty(message = "Password cannot be empty")

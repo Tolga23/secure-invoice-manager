@@ -1,21 +1,32 @@
 package com.thardal.secureinvoicemanager.user.service;
 
+import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.converter.UserConverter;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
-import com.thardal.secureinvoicemanager.user.exception.ApiException;
+import com.thardal.secureinvoicemanager.user.enums.RoleType;
+import com.thardal.secureinvoicemanager.user.enums.VerificationType;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserEntityService userEntityService;
     private final UserConverter userConverter;
+    private final RoleService roleService;
+    private final UserVerificationService userVerificationService;
+    private final PasswordEncoder passwordEncoder;
 
     public List<UserDto> findAll() {
         List<User> userList = userEntityService.findAll();
@@ -29,35 +40,41 @@ public class UserService {
 
         User user = userConverter.convertToUserSave(userSaveRequestDto);
 
-        // Check email is unique
-        String trimMail = getTrimmedMail(user);
-        if (existsByEmail(trimMail) == true)
-            throw new ApiException("Email already in use. Please use a different email adress");
+        String encodePassword = encodedUserPassword(user);
+        user.setPassword(encodePassword);
+        try {
+            user.setNotLocked(true);
 
-        // Save new user
-        user = userEntityService.save(user);
+            user = userEntityService.save(user);
+
+            String verificationUrl = getVerificationUrl(getRandomUUID(), VerificationType.ACCOUNT.getType());
+            userVerificationService.createUserVerification(user.getId(),verificationUrl);
+            roleService.addRoleToUser(user.getId(), RoleType.USER_ROLE.toString());
+
+        } catch (DataIntegrityViolationException ex) {
+            log.error(ex.getMessage());
+            throw new DataIntegrityViolationException("Email already in use. Please use a different email adress");
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            throw new RuntimeException("Something went wrong. Please try again later");
+        }
 
         UserDto userDto = userConverter.toDto(user);
-
-        // Add role to the user
-        // Send verification URL
-        // Save URL in verification table
-        // Send email to user with verification URL
-        // Return newly created user
-        // if any errors, throw exception with proper message
 
         return userDto;
     }
 
-    private boolean existsByEmail(String trimMail) {
-        boolean isEmailExist = userEntityService.existsByEmail(trimMail);
-
-        return isEmailExist;
+    private String getVerificationUrl(String key, String verificationType) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
     }
 
-    private String getTrimmedMail(User user) {
-        String email = user.getEmail();
-        String trimmedMail = email.trim().toLowerCase();
-        return trimmedMail;
+    private static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
+
+    private String encodedUserPassword(User user) {
+        String encodePassword = passwordEncoder.encode(user.getPassword());
+        return encodePassword;
+    }
+
 }
