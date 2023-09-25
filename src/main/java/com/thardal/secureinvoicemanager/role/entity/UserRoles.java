@@ -3,7 +3,7 @@ package com.thardal.secureinvoicemanager.role.entity;
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Data

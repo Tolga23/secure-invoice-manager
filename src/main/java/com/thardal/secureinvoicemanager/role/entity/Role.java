@@ -1,12 +1,8 @@
 package com.thardal.secureinvoicemanager.role.entity;
 
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
 
 @Entity
 @Data
@@ -17,7 +13,7 @@ public class Role extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "USER_ID",nullable = false)
+    @Column(name = "USER_ID", nullable = false)
     private Long userId;
 
     @Column(name = "ROLE_NAME")

@@ -2,10 +2,13 @@ package com.thardal.secureinvoicemanager.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
-import lombok.*;
-import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
