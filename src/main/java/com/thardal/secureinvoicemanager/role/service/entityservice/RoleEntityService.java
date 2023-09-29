@@ -19,11 +19,20 @@ public class RoleEntityService extends BaseEntityService<Role, RoleRepository> {
         return getDao().getRoleByUserId(userId);
     }
 
-    void updateRoleByUserIdAndRoleName(Long userId, String roleName) {
-        getDao().updateRoleByUserIdAndRoleName(userId, roleName);
-    }
+
+//    void updateRoleByUserIdAndRoleName(Long userId, String roleName) {
+//        getDao().updateRoleByUserIdAndRoleName(userId, roleName);
+//    }
 
     public Role findByRoleName(String roleName){
         return getDao().findByRoleName(roleName);
+    }
+
+    public void updateRoleByUserIdAndRoleName(Long userId, String roleName) {
+        Role role = new Role();
+        role.setRoleName(roleName);
+
+
+        update(role);
     }
 }

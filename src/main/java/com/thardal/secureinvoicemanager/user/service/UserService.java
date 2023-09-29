@@ -5,28 +5,47 @@ import com.thardal.secureinvoicemanager.user.converter.UserConverter;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
-import com.thardal.secureinvoicemanager.user.enums.RoleType;
-import com.thardal.secureinvoicemanager.user.enums.VerificationType;
+import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.List;
 import java.util.UUID;
 
+import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
+import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
+
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class UserService {
-    private final UserEntityService userEntityService;
-    private final UserConverter userConverter;
-    private final RoleService roleService;
-    private final UserVerificationService userVerificationService;
-    private final PasswordEncoder passwordEncoder;
+public class UserService implements UserDetailsService {
+    private UserEntityService userEntityService;
+    private UserConverter userConverter;
+    private RoleService roleService;
+    private UserVerificationService userVerificationService;
+    private PasswordEncoder passwordEncoder;
+
+    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService, PasswordEncoder passwordEncoder) {
+        this.userEntityService = userEntityService;
+        this.userConverter = userConverter;
+        this.roleService = roleService;
+        this.userVerificationService = userVerificationService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    private static String getRandomUUID() {
+        return UUID.randomUUID().toString();
+    }
 
     public List<UserDto> findAll() {
         List<User> userList = userEntityService.findAll();
@@ -47,9 +66,8 @@ public class UserService {
 
             user = userEntityService.save(user);
 
-            String verificationUrl = getVerificationUrl(getRandomUUID(), VerificationType.ACCOUNT.getType());
-            userVerificationService.createUserVerification(user.getId(),verificationUrl);
-            roleService.addRoleToUser(user.getId(), RoleType.USER_ROLE.toString());
+            userVerification(user);
+            roleService.addRoleToUser(user.getId(), USER_ROLE.toString());
 
         } catch (DataIntegrityViolationException ex) {
             log.error(ex.getMessage());
@@ -64,12 +82,13 @@ public class UserService {
         return userDto;
     }
 
-    private String getVerificationUrl(String key, String verificationType) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
+    private void userVerification(User user) {
+        String verificationUrl = getVerificationUrl(getRandomUUID(), ACCOUNT.getType());
+        userVerificationService.createUserVerification(user.getId(), verificationUrl);
     }
 
-    private static String getRandomUUID() {
-        return UUID.randomUUID().toString();
+    private String getVerificationUrl(String key, String verificationType) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
     }
 
     private String encodedUserPassword(User user) {
@@ -77,4 +96,39 @@ public class UserService {
         return encodePassword;
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = findUserByEmail(email);
+        validateUser(user);
+
+        return createUserDetails(user);
+    }
+
+    private UserPrincipal createUserDetails(User user) {
+        String permission = roleService.getRoleByUserId(user.getId()).getPermission();
+        return new UserPrincipal(user, permission);
+    }
+
+    private static void validateUser(User user) {
+        if (!user.isEnable()) {
+            log.error("USER DISABLED ERROR: {}", user.isEnable());
+            throw new DisabledException("User is disabled");
+        }
+    }
+
+    private User findUserByEmail(String email) {
+        User user = getUserByEmail(email);
+
+        if (user == null) {
+            log.error("User not found in the database");
+            throw new UsernameNotFoundException("User not found in the database");
+        }
+        log.info("User found in the database: {}", email);
+        return user;
+    }
+
+    public User getUserByEmail(String email) {
+        User user = userEntityService.getUserByEmail(email);
+        return user;
+    }
 }
