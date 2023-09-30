@@ -6,9 +6,11 @@ import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
+import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.DisabledException;
@@ -20,27 +22,35 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.nio.file.attribute.UserPrincipalNotFoundException;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static com.thardal.secureinvoicemanager.base.utils.SmsUtils.sendSMS;
 import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.time.DateFormatUtils.format;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 @Service
 @Slf4j
 public class UserService implements UserDetailsService {
+    private static String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private UserEntityService userEntityService;
     private UserConverter userConverter;
     private RoleService roleService;
     private UserVerificationService userVerificationService;
     private PasswordEncoder passwordEncoder;
+    private TwoFactorVerificationService twoFactorVerificationService;
 
-    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService, PasswordEncoder passwordEncoder) {
+    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService, PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService) {
         this.userEntityService = userEntityService;
         this.userConverter = userConverter;
         this.roleService = roleService;
         this.userVerificationService = userVerificationService;
         this.passwordEncoder = passwordEncoder;
+        this.twoFactorVerificationService = twoFactorVerificationService;
     }
 
     private static String getRandomUUID() {
@@ -98,26 +108,26 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = findUserByEmail(email);
+        UserDto user = findUserByEmail(email);
         validateUser(user);
 
         return createUserDetails(user);
     }
 
-    private UserPrincipal createUserDetails(User user) {
+    private UserPrincipal createUserDetails(UserDto user) {
         String permission = roleService.getRoleByUserId(user.getId()).getPermission();
         return new UserPrincipal(user, permission);
     }
 
-    private static void validateUser(User user) {
+    private void validateUser(UserDto user) {
         if (!user.isEnable()) {
             log.error("USER DISABLED ERROR: {}", user.isEnable());
             throw new DisabledException("User is disabled");
         }
     }
 
-    private User findUserByEmail(String email) {
-        User user = getUserByEmail(email);
+    private UserDto findUserByEmail(String email) {
+        UserDto user = getUserByEmail(email);
 
         if (user == null) {
             log.error("User not found in the database");
@@ -127,8 +137,24 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    public User getUserByEmail(String email) {
+    public UserDto getUserByEmail(String email) {
         User user = userEntityService.getUserByEmail(email);
-        return user;
+        UserDto userDto = userConverter.toDto(user);
+        return userDto;
+    }
+
+    public void sendVerificationCode(UserDto user) {
+        String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
+        String verificationCode = randomAlphabetic(8).toUpperCase();
+
+        try {
+            twoFactorVerificationService.deleteByUserId(user.getId());
+            twoFactorVerificationService.updateByUserIdAndVerificationCodeAndExpirationDate(user.getId(),verificationCode,expirationDate);
+            sendSMS(user.getPhone(),"From: SecureInvoice \nVerification code\n" + verificationCode);
+        } catch (Exception ex){
+            log.error(ex.getMessage());
+            throw new ApiException("An error occurred. Please try again");
+        }
+
     }
 }

@@ -1,5 +1,6 @@
 package com.thardal.secureinvoicemanager.user.entity;
 
+import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +16,7 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
-    private final User user;
+    private final UserDto user;
     private final String permission;
 
     @Override

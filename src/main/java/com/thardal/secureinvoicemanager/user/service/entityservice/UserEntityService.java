@@ -1,6 +1,7 @@
 package com.thardal.secureinvoicemanager.user.service.entityservice;
 
 import com.thardal.secureinvoicemanager.base.service.BaseEntityService;
+import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.repository.UserRepository;
 

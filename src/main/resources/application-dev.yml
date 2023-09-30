@@ -23,3 +23,6 @@ spring:
     user:
       name: root
       password: root
+  config:
+    import:
+      file: env.properties

@@ -44,13 +44,29 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody UserLoginDto userLoginDto) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userLoginDto.getEmail(), userLoginDto.getPassword()));
-        User user = userService.getUserByEmail(userLoginDto.getEmail());
+        UserDto user = userService.getUserByEmail(userLoginDto.getEmail());
+        return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
 
+    }
+
+    private ResponseEntity sendResponse(UserDto user) {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(Map.of("user", user))
                         .message("Login Success")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
+    private ResponseEntity sendVerificationCode(UserDto user) {
+        userService.sendVerificationCode(user);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(Map.of("user", user))
+                        .message("Verification Code Sent")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
