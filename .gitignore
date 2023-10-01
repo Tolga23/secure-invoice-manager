@@ -37,4 +37,4 @@ build/
 .vscode/
 *.yml
 *.properties
-src/main/resources/application-dev.yml
+
