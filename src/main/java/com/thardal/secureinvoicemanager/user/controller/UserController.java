@@ -1,10 +1,13 @@
 package com.thardal.secureinvoicemanager.user.controller;
 
 import com.thardal.secureinvoicemanager.base.entity.HttpResponse;
+import com.thardal.secureinvoicemanager.role.service.RoleService;
+import com.thardal.secureinvoicemanager.security.provider.TokenProvider;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserLoginDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
+import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +28,9 @@ import static org.springframework.http.HttpStatus.OK;
 @RequestMapping("/api/user")
 public class UserController {
     private final UserService userService;
+    private final RoleService roleService;
     private final AuthenticationManager authenticationManager;
+    private final TokenProvider tokenProvider;
 
     @GetMapping
     public ResponseEntity findAll() {
@@ -53,11 +58,18 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(Map.of("user", user))
+                        .data(Map.of("user", user,
+                                        "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                                        "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
                         .message("Login Success")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
+    }
+
+    private UserPrincipal getUserPrincipal(UserDto user) {
+        return new UserPrincipal(userService.getUserByEmail(user.getEmail()),
+                roleService.getRoleByUserId(user.getId()).getPermission());
     }
 
     private ResponseEntity sendVerificationCode(UserDto user) {
