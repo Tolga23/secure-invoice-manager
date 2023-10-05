@@ -1,7 +1,6 @@
 package com.thardal.secureinvoicemanager.user.service.entityservice;
 
 import com.thardal.secureinvoicemanager.base.service.BaseEntityService;
-import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.repository.UserRepository;
 
@@ -15,6 +14,14 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
 
     public User getUserByEmail(String email) {
         return getDao().getUserByEmail(email);
+    }
+
+    public User getUserById(Long userId) {
+        return getDao().getUserById(userId);
+    }
+
+    public User findUserByVerificationCode(String code){
+        return getDao().findUserByVerificationCode(code);
     }
 
 }

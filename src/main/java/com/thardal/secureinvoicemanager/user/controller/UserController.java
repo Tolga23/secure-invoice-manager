@@ -6,7 +6,6 @@ import com.thardal.secureinvoicemanager.security.provider.TokenProvider;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserLoginDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
-import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -54,13 +53,29 @@ public class UserController {
 
     }
 
+    @GetMapping("/verify/code/{email}/{code}")
+    public ResponseEntity verifyCopde(@PathVariable("email") String email, @PathVariable("code") String code) {
+        UserDto user = userService.verifyCode(email,code);
+
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(Map.of("user", user,
+                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
+                        .message("Login Success")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
     private ResponseEntity sendResponse(UserDto user) {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(Map.of("user", user,
-                                        "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
-                                        "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
+                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
                         .message("Login Success")
                         .status(OK)
                         .statusCode(OK.value())
