@@ -8,10 +8,7 @@ import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -92,6 +88,31 @@ public class UserService implements UserDetailsService {
         return userDto;
     }
 
+    public UserDto findUserByVerificationCode(String code) {
+        User user = userEntityService.findUserByVerificationCode(code);
+
+        UserDto dto = userConverter.toDto(user);
+
+        return dto;
+    }
+
+    public UserDto verifyCode(String email, String code) {
+
+        try {
+            UserDto userByCode = findUserByVerificationCode(code);
+            UserDto userByEmail = getUserByEmail(email);
+
+            if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
+                return userByCode;
+            }
+
+        } catch (Exception ex) {
+            throw new ApiException("Code is invalid");
+        }
+
+        return null;
+
+    }
     private void userVerification(User user) {
         String verificationUrl = getVerificationUrl(getRandomUUID(), ACCOUNT.getType());
         userVerificationService.createUserVerification(user.getId(), verificationUrl);
@@ -149,9 +170,9 @@ public class UserService implements UserDetailsService {
 
         try {
             twoFactorVerificationService.deleteByUserId(user.getId());
-            twoFactorVerificationService.updateByUserIdAndVerificationCodeAndExpirationDate(user.getId(),verificationCode,expirationDate);
-            sendSMS(user.getPhone(),"From: SecureInvoice \nVerification code\n" + verificationCode);
-        } catch (Exception ex){
+            twoFactorVerificationService.updateByUserIdAndVerificationCodeAndExpirationDate(user.getId(), verificationCode, expirationDate);
+            sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
+        } catch (Exception ex) {
             log.error(ex.getMessage());
             throw new ApiException("An error occurred. Please try again");
         }

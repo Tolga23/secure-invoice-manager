@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @Repository
-public interface TwoFactorVerificationsRepositiory extends JpaRepository<TwoFactorVerifications,Long> {
+public interface TwoFactorVerificationsRepositiory extends JpaRepository<TwoFactorVerifications, Long> {
     void deleteByUserId(Long userId);
     @Modifying
     @Query(value = "INSERT INTO two_factor_verifications (user_id, verification_code, expiration_date) " +

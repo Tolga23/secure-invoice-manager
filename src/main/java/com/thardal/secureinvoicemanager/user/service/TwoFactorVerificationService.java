@@ -10,12 +10,12 @@ public class TwoFactorVerificationService {
 
     private final TwoFactorVerificationEntityService verificationEntityService;
 
-    public void deleteByUserId(Long userId){
+    public void deleteByUserId(Long userId) {
         verificationEntityService.deleteByUserId(userId);
     }
 
-    public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId,String verificationCode,String expirationDate){
-        verificationEntityService.updateByUserIdAndVerificationCodeAndExpirationDate(userId,verificationCode,expirationDate);
+    public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId, String verificationCode, String expirationDate) {
+        verificationEntityService.updateByUserIdAndVerificationCodeAndExpirationDate(userId, verificationCode, expirationDate);
     }
 
 }
