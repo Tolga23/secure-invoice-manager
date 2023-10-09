@@ -12,6 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface TwoFactorVerificationsRepositiory extends JpaRepository<TwoFactorVerifications, Long> {
     void deleteByUserId(Long userId);
+
+    void deleteByVerificationCode(String verificationCode);
+
+    @Query(value = "SELECT CASE WHEN expiration_date < NOW() THEN true ELSE false END AS is_expired FROM two_factor_verifications WHERE verification_code = :verificationCode", nativeQuery = true)
+    Long isVerificationCodeExpiredByCode(@Param("verificationCode") String verificationCode);
+
     @Modifying
     @Query(value = "INSERT INTO two_factor_verifications (user_id, verification_code, expiration_date) " +
             "VALUES (:userId, :verificationCode, :expirationDate)", nativeQuery = true)

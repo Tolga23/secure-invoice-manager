@@ -19,4 +19,6 @@ public class UserDto {
     private boolean enable;
     private boolean isNotLocked;
     private boolean isUsingAuth;
+    private String roleName;
+    private String permissions;
 }

@@ -14,6 +14,14 @@ public class TwoFactorVerificationService {
         verificationEntityService.deleteByUserId(userId);
     }
 
+    public void deleteByVerificationCode(String verificationCode) {
+        verificationEntityService.deleteByVerificationCode(verificationCode);
+    }
+
+    public Long isVerificationCodeExpiredByCode(String verificationCode) {
+        return verificationEntityService.isVerificationCodeExpiredByCode(verificationCode);
+    }
+
     public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId, String verificationCode, String expirationDate) {
         verificationEntityService.updateByUserIdAndVerificationCodeAndExpirationDate(userId, verificationCode, expirationDate);
     }

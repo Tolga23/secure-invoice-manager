@@ -1,6 +1,7 @@
 package com.thardal.secureinvoicemanager.user.converter;
 
 import com.thardal.secureinvoicemanager.base.converter.BaseConverter;
+import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
@@ -83,5 +84,26 @@ public class UserConverter implements BaseConverter<User, UserDto> {
         return user;
     }
 
+    public UserDto userAndRoleDto(User user, RoleDto role) {
+        UserDto userDto = UserDto.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .password(user.getPassword())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .address(user.getAddress())
+                .title(user.getTitle())
+                .bio(user.getBio())
+                .enable(user.isEnable())
+                .imageUrl(user.getImageUrl())
+                .isNotLocked(user.isNotLocked())
+                .isUsingAuth(user.isUsingAuth())
+                .roleName(role.getRoleName())
+                .permissions(role.getPermission())
+                .build();
+
+        return userDto;
+    }
 
 }

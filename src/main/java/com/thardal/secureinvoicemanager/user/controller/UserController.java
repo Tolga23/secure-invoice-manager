@@ -54,7 +54,7 @@ public class UserController {
     }
 
     @GetMapping("/verify/code/{email}/{code}")
-    public ResponseEntity verifyCopde(@PathVariable("email") String email, @PathVariable("code") String code) {
+    public ResponseEntity verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
         UserDto user = userService.verifyCode(email,code);
 
         return ResponseEntity.ok().body(
@@ -70,6 +70,7 @@ public class UserController {
     }
 
     private ResponseEntity sendResponse(UserDto user) {
+        userService.sendVerificationCode(user);
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
