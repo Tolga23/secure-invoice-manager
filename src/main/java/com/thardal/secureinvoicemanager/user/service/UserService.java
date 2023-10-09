@@ -1,5 +1,7 @@
 package com.thardal.secureinvoicemanager.user.service;
 
+import com.thardal.secureinvoicemanager.role.converter.RoleConverter;
+import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.converter.UserConverter;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
@@ -88,21 +90,15 @@ public class UserService implements UserDetailsService {
         return userDto;
     }
 
-    public UserDto findUserByVerificationCode(String code) {
-        User user = userEntityService.findUserByVerificationCode(code);
-
-        UserDto dto = userConverter.toDto(user);
-
-        return dto;
-    }
-
     public UserDto verifyCode(String email, String code) {
+        if (isVerificationCodeExpired(code) != 0) throw new ApiException("This code has expired.Please login again.");
 
         try {
             UserDto userByCode = findUserByVerificationCode(code);
             UserDto userByEmail = getUserByEmail(email);
 
             if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
+                twoFactorVerificationService.deleteByVerificationCode(code);
                 return userByCode;
             }
 
@@ -113,18 +109,22 @@ public class UserService implements UserDetailsService {
         return null;
 
     }
+
+    private Long isVerificationCodeExpired(String code) {
+        return twoFactorVerificationService.isVerificationCodeExpiredByCode(code);
+    }
+
+    public UserDto findUserByVerificationCode(String code) {
+        User user = userEntityService.findUserByVerificationCode(code);
+
+        UserDto dto = userConverter.toDto(user);
+
+        return dto;
+    }
+
     private void userVerification(User user) {
         String verificationUrl = getVerificationUrl(getRandomUUID(), ACCOUNT.getType());
         userVerificationService.createUserVerification(user.getId(), verificationUrl);
-    }
-
-    private String getVerificationUrl(String key, String verificationType) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
-    }
-
-    private String encodedUserPassword(User user) {
-        String encodePassword = passwordEncoder.encode(user.getPassword());
-        return encodePassword;
     }
 
     @Override
@@ -140,13 +140,6 @@ public class UserService implements UserDetailsService {
         return new UserPrincipal(user, permission);
     }
 
-    private void validateUser(UserDto user) {
-        if (!user.isEnable()) {
-            log.error("USER DISABLED ERROR: {}", user.isEnable());
-            throw new DisabledException("User is disabled");
-        }
-    }
-
     private UserDto findUserByEmail(String email) {
         UserDto user = getUserByEmail(email);
 
@@ -160,7 +153,8 @@ public class UserService implements UserDetailsService {
 
     public UserDto getUserByEmail(String email) {
         User user = userEntityService.getUserByEmail(email);
-        UserDto userDto = userConverter.toDto(user);
+
+        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
         return userDto;
     }
 
@@ -171,11 +165,27 @@ public class UserService implements UserDetailsService {
         try {
             twoFactorVerificationService.deleteByUserId(user.getId());
             twoFactorVerificationService.updateByUserIdAndVerificationCodeAndExpirationDate(user.getId(), verificationCode, expirationDate);
-            sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
+            //sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             throw new ApiException("An error occurred. Please try again");
         }
 
+    }
+
+    private void validateUser(UserDto user) {
+        if (!user.isEnable()) {
+            log.error("USER DISABLED ERROR: {}", user.isEnable());
+            throw new DisabledException("User is disabled");
+        }
+    }
+
+    private String encodedUserPassword(User user) {
+        String encodePassword = passwordEncoder.encode(user.getPassword());
+        return encodePassword;
+    }
+
+    private String getVerificationUrl(String key, String verificationType) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
     }
 }

@@ -11,11 +11,19 @@ public class TwoFactorVerificationEntityService extends BaseEntityService<TwoFac
         super(dao);
     }
 
-    public void deleteByUserId(Long userId){
+    public void deleteByUserId(Long userId) {
         getDao().deleteByUserId(userId);
     }
 
-    public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId,String verificationCode,String expirationDate){
-        getDao().updateByUserIdAndVerificationCodeAndExpirationDate(userId,verificationCode,expirationDate);
+    public void deleteByVerificationCode(String verificationCode) {
+        getDao().deleteByVerificationCode(verificationCode);
+    }
+
+    public Long isVerificationCodeExpiredByCode(String verificationCode) {
+        return getDao().isVerificationCodeExpiredByCode(verificationCode);
+    }
+
+    public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId, String verificationCode, String expirationDate) {
+        getDao().updateByUserIdAndVerificationCodeAndExpirationDate(userId, verificationCode, expirationDate);
     }
 }
