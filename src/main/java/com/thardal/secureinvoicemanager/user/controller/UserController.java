@@ -11,7 +11,6 @@ import com.thardal.secureinvoicemanager.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -20,7 +19,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static java.time.LocalTime.now;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
 
@@ -58,44 +56,25 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity profile(Authentication authentication) {
         UserDto user = userService.getUserByEmail(authentication.getName());
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(Map.of("user", user))
-                        .message("Profile Retrieved")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
+
+        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Profile Retrieved", Map.of("user", user)));
     }
 
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
-        UserDto user = userService.verifyCode(email,code);
+        UserDto user = userService.verifyCode(email, code);
 
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(Map.of("user", user,
-                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
-                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
-                        .message("Login Success")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
+        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Login Success", Map.of("user", user,
+                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
     }
 
     private ResponseEntity sendResponse(UserDto user) {
         userService.sendVerificationCode(user);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(Map.of("user", user,
-                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
-                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
-                        .message("Login Success")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
+
+        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Login Success", Map.of("user", user,
+                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
     }
 
     private UserPrincipal getUserPrincipal(UserDto user) {
@@ -105,14 +84,8 @@ public class UserController {
 
     private ResponseEntity sendVerificationCode(UserDto user) {
         userService.sendVerificationCode(user);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(Map.of("user", user))
-                        .message("Verification Code Sent")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
+
+        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Verification Code Sent", Map.of("user", user)));
     }
 
     private URI getUri() {
