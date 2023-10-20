@@ -12,8 +12,8 @@ public class UserRolesService {
 
     public void addUserRole(Long userId, Long roleId) {
         UserRoles userRoles = new UserRoles();
-//        userRoles.setUserId(userId);
-//        userRoles.setRoleId(roleId);
+        userRoles.setRoleId(roleId);
+        userRoles.setUserId(userId);
 
         userRolesEntityService.save(userRoles);
     }

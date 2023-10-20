@@ -1,8 +1,12 @@
 package com.thardal.secureinvoicemanager.role.service;
 
+import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
+import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
+import com.thardal.secureinvoicemanager.base.exceptions.NotFoundException;
 import com.thardal.secureinvoicemanager.role.converter.RoleConverter;
 import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.role.entity.Role;
+import com.thardal.secureinvoicemanager.role.enums.RoleErrorMessages;
 import com.thardal.secureinvoicemanager.role.service.entityservice.RoleEntityService;
 import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +22,15 @@ public class RoleService {
     private final UserRolesService userRolesService;
     private final RoleConverter roleConverter;
 
-    public void addRoleToUser(Long userId, String roleName) {
-        Role role = new Role();
-        role.setRoleName(roleName);
+    public void addRoleToUser(Long userId, String roleName){
+        Long roleId = findRoleIdByRoleName(roleName);
 
-        userRolesService.addUserRole(userId, role.getId());
+        userRolesService.addUserRole(userId,roleId);
+    }
 
-        roleEntityService.save(role);
+    public Long findRoleIdByRoleName(String roleName) {
+        Role role = roleEntityService.findRoleByRoleName(roleName);
+        return role.getId();
     }
 
     public RoleDto getRoleByUserId(Long userId){
@@ -37,10 +43,10 @@ public class RoleService {
             return roleDto;
 
         }catch (EmptyResultDataAccessException ex) {
-            throw new ApiException("No role found by name: ");
+            throw new NotFoundException(RoleErrorMessages.ROLE_NOT_FOUND);
         } catch (Exception exception) {
             log.error(exception.getMessage());
-            throw new ApiException("An error occurred. Please try again.");
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
 
     }
