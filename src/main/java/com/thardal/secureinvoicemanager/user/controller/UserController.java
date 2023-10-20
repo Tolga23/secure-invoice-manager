@@ -8,7 +8,10 @@ import com.thardal.secureinvoicemanager.user.dto.UserLoginDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -19,7 +22,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
 
 @RestController
@@ -39,40 +42,44 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity save(@RequestBody UserSaveRequestDto userSaveRequestDto) {
+    public ResponseEntity save(@RequestBody @Valid UserSaveRequestDto userSaveRequestDto) {
         UserDto userDto = userService.save(userSaveRequestDto);
 
-        return ResponseEntity.ok(userDto);
+        return ResponseEntity.ok(HttpResponse.of(CREATED,Map.of("user",userDto)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody UserLoginDto userLoginDto) {
+    public ResponseEntity login(@RequestBody @Valid UserLoginDto userLoginDto) {
         authenticationManager.authenticate(unauthenticated(userLoginDto.getEmail(), userLoginDto.getPassword()));
         UserDto user = userService.getUserByEmail(userLoginDto.getEmail());
         return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
-
     }
 
     @GetMapping("/profile")
     public ResponseEntity profile(Authentication authentication) {
         UserDto user = userService.getUserByEmail(authentication.getName());
 
-        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Profile Retrieved", Map.of("user", user)));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user)));
     }
 
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
         UserDto user = userService.verifyCode(email, code);
 
-        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Login Success", Map.of("user", user,
+        return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
                 "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                 "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
+    }
+
+    @RequestMapping("/error")
+    public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
+        return ResponseEntity.ok(HttpResponse.error(BAD_REQUEST, "There is no mapping for a " + request.getMethod() + " request for this path on the server"));
     }
 
     private ResponseEntity sendResponse(UserDto user) {
         userService.sendVerificationCode(user);
 
-        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Login Success", Map.of("user", user,
+        return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
                 "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                 "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
     }
@@ -85,7 +92,7 @@ public class UserController {
     private ResponseEntity sendVerificationCode(UserDto user) {
         userService.sendVerificationCode(user);
 
-        return ResponseEntity.ok(HttpResponse.of(OK.value(), OK, "Verification Code Sent", Map.of("user", user)));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Verification Code Sent", Map.of("user", user)));
     }
 
     private URI getUri() {

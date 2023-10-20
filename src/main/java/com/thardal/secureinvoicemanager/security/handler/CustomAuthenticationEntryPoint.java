@@ -20,10 +20,9 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        HttpResponse httpResponse = HttpResponse.error(UNAUTHORIZED.value(), UNAUTHORIZED, "You need to login to access this resource");
+        HttpResponse httpResponse = HttpResponse.error(UNAUTHORIZED, "You need to login to access this resource");
 
         response.setContentType(APPLICATION_JSON_VALUE);
-        response.setStatus(UNAUTHORIZED.value());
         ServletOutputStream outputStream = response.getOutputStream();
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(outputStream, httpResponse);

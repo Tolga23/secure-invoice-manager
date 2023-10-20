@@ -20,7 +20,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        HttpResponse httpResponse = HttpResponse.error(FORBIDDEN.value(), FORBIDDEN, "You don't have enough permission");
+        HttpResponse httpResponse = HttpResponse.error(FORBIDDEN, "You don't have enough permission");
 
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(FORBIDDEN.value());
