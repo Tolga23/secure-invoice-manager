@@ -11,7 +11,6 @@ import com.thardal.secureinvoicemanager.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -45,13 +44,14 @@ public class UserController {
     public ResponseEntity save(@RequestBody @Valid UserSaveRequestDto userSaveRequestDto) {
         UserDto userDto = userService.save(userSaveRequestDto);
 
-        return ResponseEntity.ok(HttpResponse.of(CREATED,Map.of("user",userDto)));
+        return ResponseEntity.ok(HttpResponse.of(CREATED, Map.of("user", userDto)));
     }
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid UserLoginDto userLoginDto) {
-        authenticationManager.authenticate(unauthenticated(userLoginDto.getEmail(), userLoginDto.getPassword()));
-        UserDto user = userService.getUserByEmail(userLoginDto.getEmail());
+
+        Authentication authentication = authenticate(userLoginDto.getEmail(), userLoginDto.getPassword());
+        UserDto user = getAuthenticatedUser(authentication);
         return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
     }
 
@@ -84,15 +84,24 @@ public class UserController {
                 "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
     }
 
-    private UserPrincipal getUserPrincipal(UserDto user) {
-        return new UserPrincipal(userService.getUserByEmail(user.getEmail()),
-                roleService.getRoleByUserId(user.getId()).getPermission());
-    }
-
     private ResponseEntity sendVerificationCode(UserDto user) {
         userService.sendVerificationCode(user);
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Verification Code Sent", Map.of("user", user)));
+    }
+
+    private UserPrincipal getUserPrincipal(UserDto user) {
+        return new UserPrincipal(user,
+                user.getPermissions());
+    }
+
+    private UserDto getAuthenticatedUser(Authentication authentication) {
+        return ((UserPrincipal) authentication.getPrincipal()).getUser();
+    }
+
+    private Authentication authenticate(String email, String password) {
+        Authentication authentication = authenticationManager.authenticate(unauthenticated(email, password));
+        return authentication;
     }
 
     private URI getUri() {

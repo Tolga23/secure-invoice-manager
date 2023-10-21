@@ -1,6 +1,8 @@
 package com.thardal.secureinvoicemanager.base.service;
 
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
+import com.thardal.secureinvoicemanager.base.exceptions.NotFoundException;
+import com.thardal.secureinvoicemanager.user.enums.UserErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -34,6 +36,19 @@ public abstract class BaseEntityService<E extends BaseEntity, D extends JpaRepos
 
     public D getDao() {
         return dao;
+    }
+
+    public E getByIdWithControl(Long id) {
+        Optional<E> entityOptional = findById(id);
+
+        E entity;
+        if (entityOptional.isPresent()) {
+            entity = entityOptional.get();
+        } else {
+            throw new NotFoundException(UserErrorMessages.USER_NOT_FOUND);
+        }
+
+        return entity;
     }
 
 }

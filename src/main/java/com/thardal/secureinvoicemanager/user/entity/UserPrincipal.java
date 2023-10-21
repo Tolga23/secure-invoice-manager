@@ -1,5 +1,6 @@
 package com.thardal.secureinvoicemanager.user.entity;
 
+import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -54,4 +55,7 @@ public class UserPrincipal implements UserDetails {
         return this.user.isEnable();
     }
 
+    public UserDto getUser(){
+        return user;
+    }
 }
