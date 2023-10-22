@@ -1,6 +1,7 @@
 package com.thardal.secureinvoicemanager.user.service;
 
-import com.thardal.secureinvoicemanager.role.converter.RoleConverter;
+import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
+import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
 import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.converter.UserConverter;
@@ -8,6 +9,7 @@ import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
+import com.thardal.secureinvoicemanager.user.enums.UserErrorMessages;
 import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.extern.slf4j.Slf4j;
@@ -79,10 +81,10 @@ public class UserService implements UserDetailsService {
 
         } catch (DataIntegrityViolationException ex) {
             log.error(ex.getMessage());
-            throw new DataIntegrityViolationException("Email already in use. Please use a different email adress");
-        } catch (Exception ex) {
+            throw new DataIntegrityViolationException(UserErrorMessages.EMAIL_ALREADY_IN_USE.getMessage());
+        } catch (BusinessException ex) {
             log.error(ex.getMessage());
-            throw new RuntimeException("Something went wrong. Please try again later");
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
 
         UserDto userDto = userConverter.toDto(user);
@@ -91,7 +93,7 @@ public class UserService implements UserDetailsService {
     }
 
     public UserDto verifyCode(String email, String code) {
-        if (isVerificationCodeExpired(code) != 0) throw new ApiException("This code has expired.Please login again.");
+        if (isVerificationCodeExpired(code) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
 
         try {
             UserDto userByCode = findUserByVerificationCode(code);
@@ -100,13 +102,13 @@ public class UserService implements UserDetailsService {
             if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
                 twoFactorVerificationService.deleteByVerificationCode(code);
                 return userByCode;
+            }else {
+                throw new ApiException(UserErrorMessages.INCORRECT_EMAIL);
             }
 
         } catch (Exception ex) {
-            throw new ApiException("Code is invalid");
+            throw new ApiException(UserErrorMessages.INVALID_CODE);
         }
-
-        return null;
 
     }
 
@@ -117,7 +119,7 @@ public class UserService implements UserDetailsService {
     public UserDto findUserByVerificationCode(String code) {
         User user = userEntityService.findUserByVerificationCode(code);
 
-        UserDto dto = userConverter.toDto(user);
+        UserDto dto = userConverter.userAndRoleDto(user,roleService.getRoleByUserId(user.getId()));
 
         return dto;
     }
@@ -129,7 +131,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserDto user = findUserByEmail(email);
+        UserDto user = getUserByEmail(email);
         validateUser(user);
 
         return createUserDetails(user);
@@ -140,19 +142,14 @@ public class UserService implements UserDetailsService {
         return new UserPrincipal(user, permission);
     }
 
-    private UserDto findUserByEmail(String email) {
-        UserDto user = getUserByEmail(email);
+    public UserDto getUserByEmail(String email) {
+        User user = userEntityService.getUserByEmail(email);
 
         if (user == null) {
             log.error("User not found in the database");
-            throw new UsernameNotFoundException("User not found in the database");
+            throw new ApiException(UserErrorMessages.USER_NOT_FOUND);
         }
         log.info("User found in the database: {}", email);
-        return user;
-    }
-
-    public UserDto getUserByEmail(String email) {
-        User user = userEntityService.getUserByEmail(email);
 
         UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
         return userDto;
@@ -168,7 +165,7 @@ public class UserService implements UserDetailsService {
             //sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
         } catch (Exception ex) {
             log.error(ex.getMessage());
-            throw new ApiException("An error occurred. Please try again");
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
 
     }
