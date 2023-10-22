@@ -1,5 +1,7 @@
 package com.thardal.secureinvoicemanager.user.service;
 
+import com.thardal.secureinvoicemanager.user.enums.UserErrorMessages;
+import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.TwoFactorVerificationEntityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,11 @@ public class TwoFactorVerificationService {
     }
 
     public Long isVerificationCodeExpiredByCode(String verificationCode) {
-        return verificationEntityService.isVerificationCodeExpiredByCode(verificationCode);
+        Long isVerificationCodeExpired = verificationEntityService.isVerificationCodeExpiredByCode(verificationCode);
+
+        if (isVerificationCodeExpired == null) throw new ApiException(UserErrorMessages.INVALID_CODE);
+
+        return isVerificationCodeExpired;
     }
 
     public void updateByUserIdAndVerificationCodeAndExpirationDate(Long userId, String verificationCode, String expirationDate) {
