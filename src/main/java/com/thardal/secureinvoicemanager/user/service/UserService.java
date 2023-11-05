@@ -10,10 +10,12 @@ import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.enums.UserErrorMessages;
+import com.thardal.secureinvoicemanager.user.enums.VerificationType;
 import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import static com.thardal.secureinvoicemanager.base.utils.SmsUtils.sendSMS;
 import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
+import static com.thardal.secureinvoicemanager.user.enums.VerificationType.PASSWORD;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.time.DateFormatUtils.format;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
@@ -44,17 +47,17 @@ public class UserService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
     private TwoFactorVerificationService twoFactorVerificationService;
 
-    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService, PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService) {
+    private ResetPasswordVerificationsService resetPasswordVerificationsService;
+
+    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService,
+                       PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService, ResetPasswordVerificationsService resetPasswordVerificationsService) {
         this.userEntityService = userEntityService;
         this.userConverter = userConverter;
         this.roleService = roleService;
         this.userVerificationService = userVerificationService;
         this.passwordEncoder = passwordEncoder;
         this.twoFactorVerificationService = twoFactorVerificationService;
-    }
-
-    private static String getRandomUUID() {
-        return UUID.randomUUID().toString();
+        this.resetPasswordVerificationsService = resetPasswordVerificationsService;
     }
 
     public List<UserDto> findAll() {
@@ -102,12 +105,28 @@ public class UserService implements UserDetailsService {
             if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
                 twoFactorVerificationService.deleteByVerificationCode(code);
                 return userByCode;
-            }else {
+            } else {
                 throw new ApiException(UserErrorMessages.INCORRECT_EMAIL);
             }
 
         } catch (Exception ex) {
             throw new ApiException(UserErrorMessages.INVALID_CODE);
+        }
+
+    }
+
+    public void resetPassword(String email) {
+        UserDto userByEmail = getUserByEmail(email);
+
+        try {
+            String expirationDate = getExpirationDate();
+            String verificationUrl = getVerificationUrl(getRandomUUID(), PASSWORD.getType());
+
+            resetPasswordVerificationsService.deleteResetPasswordVerificationsByUserId(userByEmail.getId());
+            resetPasswordVerificationsService.insertResetPasswordVerifications(userByEmail.getId(), expirationDate, verificationUrl);
+            log.info(verificationUrl);
+        } catch (Exception ex) {
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
 
     }
@@ -119,7 +138,7 @@ public class UserService implements UserDetailsService {
     public UserDto findUserByVerificationCode(String code) {
         User user = userEntityService.findUserByVerificationCode(code);
 
-        UserDto dto = userConverter.userAndRoleDto(user,roleService.getRoleByUserId(user.getId()));
+        UserDto dto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
 
         return dto;
     }
@@ -156,7 +175,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void sendVerificationCode(UserDto user) {
-        String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
+        String expirationDate = getExpirationDate();
         String verificationCode = randomAlphabetic(8).toUpperCase();
 
         try {
@@ -166,6 +185,52 @@ public class UserService implements UserDetailsService {
         } catch (Exception ex) {
             log.error(ex.getMessage());
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
+        }
+
+    }
+
+    public void renewPassword(String key, String password, String confirmPassword) {
+        if (!password.equals(confirmPassword)) throw new ApiException(UserErrorMessages.PASSWORD_NOT_EQUAL);
+
+        try {
+            userEntityService.updatePasswordByUrl(passwordEncoder.encode(password), getVerificationUrl(key, PASSWORD.getType()));
+
+        } catch (ApiException ex) {
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
+        }
+
+
+    }
+
+    public UserDto verifyPasswordKey(String key) {
+
+        if (isLinkExpired(key, PASSWORD) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
+
+        try {
+            User user = userEntityService.findUserByResetPasswordVerification(getVerificationUrl(key, PASSWORD.getType()));
+            UserDto dto = userConverter.toDto(user);
+
+            return dto;
+        } catch (BusinessException ex) {
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
+        }
+        // remove password reset link when user click the link once
+        //resetPasswordVerificationsService.deleteResetPasswordVerificationsByUserId(user.getId());
+
+
+    }
+
+    // TODO Eğer key uygun formatte değilse direk exception çıkart
+    private Long isLinkExpired(String key, VerificationType password) {
+        Long isLinkValid = resetPasswordVerificationsService.isLinkExpired(getVerificationUrl(key, password.getType()));
+
+        if (isLinkValid == null) throw new ApiException(UserErrorMessages.INVALID_KEY);
+
+        try {
+            return isLinkValid;
+        } catch (Exception ex) {
+            log.error("This link is not valid. URL **");
+            throw new ApiException(UserErrorMessages.LINK_EXPIRED);
         }
 
     }
@@ -183,6 +248,15 @@ public class UserService implements UserDetailsService {
     }
 
     private String getVerificationUrl(String key, String verificationType) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + verificationType + "/" + key).toUriString();
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/verify/" + verificationType + "/" + key).toUriString();
+    }
+
+    private String getRandomUUID() {
+        return UUID.randomUUID().toString();
+    }
+
+    private String getExpirationDate() {
+        String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
+        return expirationDate;
     }
 }

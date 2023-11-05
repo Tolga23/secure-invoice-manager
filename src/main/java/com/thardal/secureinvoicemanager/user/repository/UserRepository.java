@@ -15,4 +15,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.id = (SELECT v.userId FROM TwoFactorVerifications v WHERE v.verificationCode = :code)")
     User findUserByVerificationCode(String code);
+
+    @Query("SELECT u from User u where u.id = (SELECT r.userId from ResetPasswordVerifications r where r.url = :url)")
+    User findUserByResetPasswordVerification(String url);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.password = :password  where u.id = (SELECT r.userId from ResetPasswordVerifications r where r.url = :url)")
+    void updatePasswordByUrl(String password, String url);
 }

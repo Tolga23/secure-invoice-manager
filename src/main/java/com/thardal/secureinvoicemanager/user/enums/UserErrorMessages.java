@@ -8,11 +8,14 @@ public enum UserErrorMessages implements BaseErrorMessages {
     BAD_CREDENTIALS("Incorrect email or password"),
     INCORRECT_EMAIL("Incorrect email"),
     CODE_EXPIRED("This code has expired. Please login again."),
-    INVALID_CODE("Code is invalid");
+    INVALID_CODE("Code is invalid"),
+    LINK_EXPIRED("This link has expired. Please reset your password again."),
 
+    PASSWORD_NOT_EQUAL("Password don't match. Please try again."),
+    INVALID_KEY("Key is invalid");
     private String message;
 
-    UserErrorMessages(String message){
+    UserErrorMessages(String message) {
         this.message = message;
     }
 
