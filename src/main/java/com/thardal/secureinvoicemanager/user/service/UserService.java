@@ -131,6 +131,21 @@ public class UserService implements UserDetailsService {
 
     }
 
+    public UserDto verifyAccount(String key) {
+        User user = getUserByVerificationUrl(key);
+
+        try {
+            userEntityService.updateUserEnabledById(user.getId());
+
+            UserDto dto = userConverter.toDto(user);
+
+            return dto;
+        } catch (Exception ex) {
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
+        }
+
+    }
+
     private Long isVerificationCodeExpired(String code) {
         return twoFactorVerificationService.isVerificationCodeExpiredByCode(code);
     }
@@ -219,8 +234,8 @@ public class UserService implements UserDetailsService {
 
 
     }
-
     // TODO Eğer key uygun formatte değilse direk exception çıkart
+
     private Long isLinkExpired(String key, VerificationType password) {
         Long isLinkValid = resetPasswordVerificationsService.isLinkExpired(getVerificationUrl(key, password.getType()));
 
@@ -258,5 +273,13 @@ public class UserService implements UserDetailsService {
     private String getExpirationDate() {
         String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
         return expirationDate;
+    }
+
+    private User getUserByVerificationUrl(String key) {
+        User user = userEntityService.findUserByVerificationUrl(getVerificationUrl(key, ACCOUNT.getType()));
+
+        if (user == null) throw new ApiException(UserErrorMessages.INVALID_KEY);
+
+        return user;
     }
 }

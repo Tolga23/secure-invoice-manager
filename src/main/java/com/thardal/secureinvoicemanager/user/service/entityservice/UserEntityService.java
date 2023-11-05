@@ -32,4 +32,12 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
         getDao().updatePasswordByUrl(password,url);
     }
 
+    public User findUserByVerificationUrl(String url){
+        return getDao().findUserByVerificationUrl(url);
+    }
+
+    public void updateUserEnabledById(Long userId){
+        getDao().updateUserEnabledById(userId);
+    }
+
 }

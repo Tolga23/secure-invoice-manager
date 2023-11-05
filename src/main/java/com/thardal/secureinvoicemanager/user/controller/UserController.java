@@ -80,7 +80,7 @@ public class UserController {
     public ResponseEntity resetPassword(@PathVariable("key") String key, @PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
         userService.renewPassword(key,password,confirmPassword);
 
-        return ResponseEntity.ok(HttpResponse.of(OK,"Please enter a new password."));
+        return ResponseEntity.ok(HttpResponse.of(OK,"Password successfully changed."));
     }
 
     @GetMapping("/verify/code/{email}/{code}")
@@ -90,6 +90,13 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
                 "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                 "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
+    }
+
+    @GetMapping("/verify/account/{key}")
+    public ResponseEntity verifyAccount(@PathVariable("key") String key) {
+        UserDto user = userService.verifyAccount(key);
+
+        return ResponseEntity.ok(HttpResponse.of(OK, user.isEnable() ? "Account already verified" : "Account verified"));
     }
 
     @RequestMapping("/error")
