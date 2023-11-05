@@ -62,6 +62,27 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user)));
     }
 
+    @GetMapping("/resetpassword/{email}")
+    public ResponseEntity resetPasswordByMail(@PathVariable("email") String email) {
+        userService.resetPassword(email);
+
+        return ResponseEntity.ok(HttpResponse.of(OK,"Email sent. Please check your email to reset your password."));
+    }
+
+    @GetMapping("/verify/password/{key}")
+    public ResponseEntity verifyPasswordUrl(@PathVariable("key") String key) {
+        UserDto userDto = userService.verifyPasswordKey(key);
+
+        return ResponseEntity.ok(HttpResponse.of(OK,"Please enter a new password.", Map.of("user",userDto)));
+    }
+
+    @PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
+    public ResponseEntity resetPassword(@PathVariable("key") String key, @PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
+        userService.renewPassword(key,password,confirmPassword);
+
+        return ResponseEntity.ok(HttpResponse.of(OK,"Please enter a new password."));
+    }
+
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
         UserDto user = userService.verifyCode(email, code);

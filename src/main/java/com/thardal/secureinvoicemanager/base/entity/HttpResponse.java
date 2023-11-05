@@ -49,6 +49,10 @@ public class HttpResponse<T> implements Serializable {
         return new HttpResponse<>(status, message, data);
     }
 
+    public static <T> HttpResponse<T> of(HttpStatus status, String message) {
+        return new HttpResponse<>(status, message);
+    }
+
     public static <T> HttpResponse<T> error(HttpStatus status, String message, Map<?, ?> data) {
         return new HttpResponse<>(status, message, data);
     }
