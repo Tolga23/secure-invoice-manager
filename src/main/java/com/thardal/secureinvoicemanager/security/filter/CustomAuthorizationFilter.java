@@ -27,7 +27,7 @@ import static java.util.Optional.ofNullable;
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
-    private static final String[] PUBLIC_ROUTES = {"/api/user/login/**", "/api/user/verify/**"};
+    private static final String[] PUBLIC_ROUTES = {"/api/user/login/**", "/api/user/verify/**", "/api/user/refresh/token"};
     protected static final String TOKEN_KEY = "token";
     protected static final String EMAIL_KEY = "email";
     private static final String TOKEN_PREFIX = "Bearer ";
