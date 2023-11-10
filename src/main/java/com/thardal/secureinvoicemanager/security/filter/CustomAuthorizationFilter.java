@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.thardal.secureinvoicemanager.base.utils.ExceptionUtils.processError;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -57,7 +58,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
             log.error(exception.getMessage());
-            //processError(request,response,exception);
+            processError(request,response,exception);
         }
     }
 

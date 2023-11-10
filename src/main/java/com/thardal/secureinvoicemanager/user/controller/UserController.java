@@ -106,7 +106,7 @@ public class UserController {
         if (isHeaderTokenValid(request)) {
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
             UserDto user = userService.getUserByEmail(tokenProvider.getSubject(token, request));
-            return ResponseEntity.ok(HttpResponse.of(OK, "Token refresh", Map.of("user", user,
+            return ResponseEntity.ok(HttpResponse.of(OK, "Token refreshed", Map.of("user", user,
                     "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                     "refresh_token", token)));
         } else {
