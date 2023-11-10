@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
 
@@ -28,6 +29,7 @@ import static org.springframework.security.authentication.UsernamePasswordAuthen
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
 public class UserController {
+    private static final String TOKEN_PREFIX = "Bearer ";
     private final UserService userService;
     private final RoleService roleService;
     private final AuthenticationManager authenticationManager;
@@ -66,21 +68,21 @@ public class UserController {
     public ResponseEntity resetPasswordByMail(@PathVariable("email") String email) {
         userService.resetPassword(email);
 
-        return ResponseEntity.ok(HttpResponse.of(OK,"Email sent. Please check your email to reset your password."));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Email sent. Please check your email to reset your password."));
     }
 
     @GetMapping("/verify/password/{key}")
     public ResponseEntity verifyPasswordUrl(@PathVariable("key") String key) {
         UserDto userDto = userService.verifyPasswordKey(key);
 
-        return ResponseEntity.ok(HttpResponse.of(OK,"Please enter a new password.", Map.of("user",userDto)));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Please enter a new password.", Map.of("user", userDto)));
     }
 
     @PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
     public ResponseEntity resetPassword(@PathVariable("key") String key, @PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
-        userService.renewPassword(key,password,confirmPassword);
+        userService.renewPassword(key, password, confirmPassword);
 
-        return ResponseEntity.ok(HttpResponse.of(OK,"Password successfully changed."));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
     }
 
     @GetMapping("/verify/code/{email}/{code}")
@@ -99,9 +101,29 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, user.isEnable() ? "Account already verified" : "Account verified"));
     }
 
+    @GetMapping("/refresh/token")
+    public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
+        if (isHeaderTokenValid(request)) {
+            String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
+            UserDto user = userService.getUserByEmail(tokenProvider.getSubject(token, request));
+            return ResponseEntity.ok(HttpResponse.of(OK, "Token refresh", Map.of("user", user,
+                    "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                    "refresh_token", token)));
+        } else {
+            return ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST, "Refresh Token missing or invalid"));
+        }
+    }
+
+    private boolean isHeaderTokenValid(HttpServletRequest request) {
+        return request.getHeader(AUTHORIZATION) != null
+                && request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
+                && tokenProvider.isTokenValid(tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()), request),
+                request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()));
+    }
+
     @RequestMapping("/error")
     public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
-        return ResponseEntity.ok(HttpResponse.error(BAD_REQUEST, "There is no mapping for a " + request.getMethod() + " request for this path on the server"));
+        return ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST, "There is no mapping for a " + request.getMethod() + " request for this path on the server"));
     }
 
     private ResponseEntity sendResponse(UserDto user) {
