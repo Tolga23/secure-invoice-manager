@@ -46,7 +46,7 @@ public class UserController {
     public ResponseEntity save(@RequestBody @Valid UserSaveRequestDto userSaveRequestDto) {
         UserDto userDto = userService.save(userSaveRequestDto);
 
-        return ResponseEntity.ok(HttpResponse.of(CREATED, Map.of("user", userDto)));
+        return ResponseEntity.ok(HttpResponse.of(CREATED,"Registered successfully.", Map.of("user", userDto)));
     }
 
     @PostMapping("/login")
@@ -110,7 +110,7 @@ public class UserController {
                     "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                     "refresh_token", token)));
         } else {
-            return ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST, "Refresh Token missing or invalid"));
+            return ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST, "Refresh Token missing or invalid", "Refresh Token missing or invalid"));
         }
     }
 

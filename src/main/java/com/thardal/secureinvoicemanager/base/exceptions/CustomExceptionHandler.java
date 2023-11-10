@@ -33,8 +33,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler imple
     @ExceptionHandler
     public ResponseEntity<Object> handleException(Exception ex) {
         String errorMessage = ex.getMessage().contains("expected 1, actual 0") ? "Record not found" : "Some error occurred";
-        HttpResponse<Object> restResponse = HttpResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage);
-        restResponse.setDeveloperMessage(ex.getMessage());
+        HttpResponse<Object> restResponse = HttpResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage, ex.getMessage());
         return new ResponseEntity<>(restResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
