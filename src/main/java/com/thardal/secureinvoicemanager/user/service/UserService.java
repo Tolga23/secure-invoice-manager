@@ -2,9 +2,9 @@ package com.thardal.secureinvoicemanager.user.service;
 
 import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
 import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
-import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.converter.UserConverter;
+import com.thardal.secureinvoicemanager.user.dto.ProfileUpdateDto;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
 import com.thardal.secureinvoicemanager.user.entity.User;
@@ -15,7 +15,6 @@ import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,6 +25,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.thardal.secureinvoicemanager.base.utils.SmsUtils.sendSMS;
@@ -146,6 +146,30 @@ public class UserService implements UserDetailsService {
 
     }
 
+    public UserDto updateUser(ProfileUpdateDto updateUser) {
+
+        Optional<User> optionalUser = userEntityService.findById(updateUser.getId());
+
+        return optionalUser.map(
+                        user -> {
+                            user.setFirstName(updateUser.getFirstName());
+                            user.setLastName(updateUser.getLastName());
+                            user.setEmail(updateUser.getEmail());
+                            user.setPhone(updateUser.getPhone());
+                            user.setAddress(updateUser.getAddress());
+                            user.setTitle(updateUser.getTitle());
+                            user.setBio(updateUser.getBio());
+
+                            return userConverter.toDto(userEntityService.update(user));
+                        })
+                .orElse(null);
+    }
+
+    public UserDto getUserById(Long userId) {
+        User user = userEntityService.findById(userId).orElse(null);
+        return userConverter.toDto(user);
+    }
+
     private Long isVerificationCodeExpired(String code) {
         return twoFactorVerificationService.isVerificationCodeExpiredByCode(code);
     }
@@ -216,7 +240,6 @@ public class UserService implements UserDetailsService {
 
 
     }
-
     public UserDto verifyPasswordKey(String key) {
 
         if (isLinkExpired(key, PASSWORD) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
@@ -234,6 +257,7 @@ public class UserService implements UserDetailsService {
 
 
     }
+
     // TODO Eğer key uygun formatte değilse direk exception çıkart
 
     private Long isLinkExpired(String key, VerificationType password) {
@@ -282,4 +306,5 @@ public class UserService implements UserDetailsService {
 
         return user;
     }
+
 }

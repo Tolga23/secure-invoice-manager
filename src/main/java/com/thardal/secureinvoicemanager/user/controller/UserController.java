@@ -3,6 +3,7 @@ package com.thardal.secureinvoicemanager.user.controller;
 import com.thardal.secureinvoicemanager.base.entity.HttpResponse;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.security.provider.TokenProvider;
+import com.thardal.secureinvoicemanager.user.dto.ProfileUpdateDto;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import com.thardal.secureinvoicemanager.user.dto.UserLoginDto;
 import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
@@ -53,13 +55,20 @@ public class UserController {
     public ResponseEntity login(@RequestBody @Valid UserLoginDto userLoginDto) {
 
         Authentication authentication = authenticate(userLoginDto.getEmail(), userLoginDto.getPassword());
-        UserDto user = getAuthenticatedUser(authentication);
+        UserDto user = getLoggedUser(authentication);
         return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity updateUser(@RequestBody @Valid ProfileUpdateDto user) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
+        UserDto updatedUser = userService.updateUser(user);
+        return ResponseEntity.ok(HttpResponse.of(OK, "User updated", Map.of("user", updatedUser)));
     }
 
     @GetMapping("/profile")
     public ResponseEntity profile(Authentication authentication) {
-        UserDto user = userService.getUserByEmail(authentication.getName());
+        UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user)));
     }
@@ -105,7 +114,7 @@ public class UserController {
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
         if (isHeaderTokenValid(request)) {
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-            UserDto user = userService.getUserByEmail(tokenProvider.getSubject(token, request));
+            UserDto user = userService.getUserById(tokenProvider.getSubject(token, request));
             return ResponseEntity.ok(HttpResponse.of(OK, "Token refreshed", Map.of("user", user,
                     "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                     "refresh_token", token)));
@@ -146,6 +155,10 @@ public class UserController {
     }
 
     private UserDto getAuthenticatedUser(Authentication authentication) {
+        return ((UserDto) authentication.getPrincipal());
+    }
+
+    private UserDto getLoggedUser(Authentication authentication) {
         return ((UserPrincipal) authentication.getPrincipal()).getUser();
     }
 
