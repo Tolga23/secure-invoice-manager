@@ -34,7 +34,7 @@ public class TokenProvider {
     public static final String TOKEN_CANNOT_BE_VERIFIED = "Token cannot be verified";
     private static final String CUSTOM_MANAGEMENT_SERVICE = "CUSTOM_MANAGEMENT_SERVICE";
     private static final String GET_SECURE = "GET_SECURE";
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 30_000_000;
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
 
     private final UserService userService;
@@ -70,16 +70,16 @@ public class TokenProvider {
     public Long getSubject(String token, HttpServletRequest request) {
 
         try {
-           return Long.valueOf(getJWTVerifier().verify(token).getSubject());
+            return Long.valueOf(getJWTVerifier().verify(token).getSubject());
         } catch (TokenExpiredException exception) {
             request.setAttribute("expiredMessage", exception.getMessage());
+            throw exception;
         } catch (InvalidClaimException exception) {
             request.setAttribute("invalidClaim", exception.getMessage());
+            throw exception;
         } catch (Exception exception) {
             throw exception;
         }
-
-        return null;
     }
 
     public List<GrantedAuthority> getAuthorities(String token) {

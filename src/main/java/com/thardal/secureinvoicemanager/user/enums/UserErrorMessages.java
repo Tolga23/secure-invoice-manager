@@ -12,6 +12,7 @@ public enum UserErrorMessages implements BaseErrorMessages {
     LINK_EXPIRED("This link has expired. Please reset your password again."),
 
     PASSWORD_NOT_EQUAL("Password don't match. Please try again."),
+    PASSWORD_IS_WRONG("Current password is wrong. Please try again."),
     INVALID_KEY("Key is invalid");
     private String message;
 

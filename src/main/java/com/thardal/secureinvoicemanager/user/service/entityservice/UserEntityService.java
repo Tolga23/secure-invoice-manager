@@ -40,4 +40,8 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
         getDao().updateUserEnabledById(userId);
     }
 
+    public void updatePassword(Long userId, String password) {
+        getDao().updatePassword(userId,password);
+    }
+
 }

@@ -37,6 +37,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler imple
         return new ResponseEntity<>(restResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // handle exceptions that occur when a method argument annotated with @Valid fails validation.
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         List<FieldError> fieldErrorList = ex.getBindingResult().getFieldErrors();

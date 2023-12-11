@@ -3,10 +3,7 @@ package com.thardal.secureinvoicemanager.user.controller;
 import com.thardal.secureinvoicemanager.base.entity.HttpResponse;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.security.provider.TokenProvider;
-import com.thardal.secureinvoicemanager.user.dto.ProfileUpdateDto;
-import com.thardal.secureinvoicemanager.user.dto.UserDto;
-import com.thardal.secureinvoicemanager.user.dto.UserLoginDto;
-import com.thardal.secureinvoicemanager.user.dto.UserSaveRequestDto;
+import com.thardal.secureinvoicemanager.user.dto.*;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
 import com.thardal.secureinvoicemanager.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -94,6 +91,14 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
     }
 
+    @PatchMapping("/update/password")
+    public ResponseEntity updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordDto user) {
+        UserDto userDto = getAuthenticatedUser(authentication);
+
+        userService.updatePassword(userDto.getId(), user.getCurrentPassword(), user.getNewPassword(), user.getConfirmPassword());
+        return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
+    }
+
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
         UserDto user = userService.verifyCode(email, code);
@@ -151,7 +156,7 @@ public class UserController {
 
     private UserPrincipal getUserPrincipal(UserDto user) {
         return new UserPrincipal(user,
-                user.getPermissions());
+                roleService.getRoleByUserId(user.getId()).getRoleName());
     }
 
     private UserDto getAuthenticatedUser(Authentication authentication) {
