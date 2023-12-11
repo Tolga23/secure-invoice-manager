@@ -1,5 +1,6 @@
 package com.thardal.secureinvoicemanager.user.service;
 
+import com.thardal.secureinvoicemanager.base.enums.BaseErrorMessages;
 import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
 import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
@@ -165,6 +166,21 @@ public class UserService implements UserDetailsService {
                 .orElse(null);
     }
 
+    public void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ApiException(UserErrorMessages.PASSWORD_NOT_EQUAL);
+        }
+
+        UserDto userById = getUserById(id);
+
+        if (passwordEncoder.matches(currentPassword, userById.getPassword())) {
+            userEntityService.updatePassword(id, passwordEncoder.encode(newPassword));
+        } else {
+            throw new ApiException(UserErrorMessages.PASSWORD_IS_WRONG);
+        }
+
+    }
+
     public UserDto getUserById(Long userId) {
         User user = userEntityService.findById(userId).orElse(null);
         return userConverter.toDto(user);
@@ -240,6 +256,7 @@ public class UserService implements UserDetailsService {
 
 
     }
+
     public UserDto verifyPasswordKey(String key) {
 
         if (isLinkExpired(key, PASSWORD) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
@@ -306,5 +323,4 @@ public class UserService implements UserDetailsService {
 
         return user;
     }
-
 }
