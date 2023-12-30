@@ -8,13 +8,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
+
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Long> {
 
     @Transactional
     @Modifying
     @Query("update Role r set r.roleName = :roleName where r.id = :id")
-    void updateRoleByIdAndRoleName(Long id,String roleName);
+    void updateRoleByIdAndRoleName(Long id, String roleName);
 
     @Query("SELECT r FROM Role r " +
             "JOIN UserRoles ur ON ur.roleId = r.id " +
@@ -28,5 +31,4 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 //    void updateRoleByUserIdAndRoleName(Long userId, String roleName);
 
     Role findRoleByRoleName(String roleName);
-
 }

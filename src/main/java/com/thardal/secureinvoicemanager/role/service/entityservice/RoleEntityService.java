@@ -5,6 +5,8 @@ import com.thardal.secureinvoicemanager.role.entity.Role;
 import com.thardal.secureinvoicemanager.role.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+
 @Service
 public class RoleEntityService extends BaseEntityService<Role, RoleRepository> {
     public RoleEntityService(RoleRepository dao) {
@@ -21,6 +23,10 @@ public class RoleEntityService extends BaseEntityService<Role, RoleRepository> {
 
     public Role findRoleByRoleName(String roleName) {
         return getDao().findRoleByRoleName(roleName);
+    }
+
+    public Collection<Role> getRoles(){
+        return getDao().findAll();
     }
 
 }

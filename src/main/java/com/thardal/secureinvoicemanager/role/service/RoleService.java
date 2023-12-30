@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -22,10 +25,22 @@ public class RoleService {
     private final UserRolesService userRolesService;
     private final RoleConverter roleConverter;
 
+    public Collection<RoleDto> getRoles(){
+        Collection<Role> roles = roleEntityService.getRoles();
+        List<RoleDto> dtoList = roleConverter.toDtoList((List<Role>) roles);
+
+        return dtoList;
+    }
+
     public void addRoleToUser(Long userId, String roleName){
         Long roleId = findRoleIdByRoleName(roleName);
 
         userRolesService.addUserRole(userId,roleId);
+    }
+
+    public void updateRoleToUser(Long userId, String roleName){
+        Long roleId = findRoleIdByRoleName(roleName);
+        userRolesService.updateUserRole(userId,roleId);
     }
 
     public Long findRoleIdByRoleName(String roleName) {

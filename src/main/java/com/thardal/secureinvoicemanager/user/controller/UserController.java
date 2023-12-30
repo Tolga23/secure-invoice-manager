@@ -67,7 +67,7 @@ public class UserController {
     public ResponseEntity profile(Authentication authentication) {
         UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
 
-        return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user)));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user,"roles",roleService.getRoles())));
     }
 
     @GetMapping("/resetpassword/{email}")
@@ -97,6 +97,13 @@ public class UserController {
 
         userService.updatePassword(userDto.getId(), user.getCurrentPassword(), user.getNewPassword(), user.getConfirmPassword());
         return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
+    }
+
+    @PatchMapping("/update/role/{roleName}")
+    public ResponseEntity updateRole(Authentication authentication, @PathVariable("roleName") String roleName) {
+        UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
+        roleService.updateRoleToUser(user.getId(),roleName);
+        return ResponseEntity.ok(HttpResponse.of(OK,"Role successfully updated.",Map.of("user", userService.getUserByEmail(user.getEmail()),"roles",roleService.getRoles())));
     }
 
     @GetMapping("/verify/code/{email}/{code}")
