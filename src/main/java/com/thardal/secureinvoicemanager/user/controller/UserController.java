@@ -63,6 +63,13 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, "User updated", Map.of("user", updatedUser)));
     }
 
+    @PatchMapping("/update/settings")
+    public ResponseEntity updateAccountSettings(Authentication authentication, @RequestBody @Valid AccountSettingsDto form) {
+        UserDto userDto = getAuthenticatedUser(authentication);
+        userService.updateAccountSettings(userDto.getId(),form.getEnable(),form.getIsNotLocked());
+        return ResponseEntity.ok(HttpResponse.of(OK, "Account setting updated.", Map.of("user", userService.getUserById(userDto.getId()))));
+    }
+
     @GetMapping("/profile")
     public ResponseEntity profile(Authentication authentication) {
         UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());

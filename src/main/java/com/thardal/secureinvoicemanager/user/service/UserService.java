@@ -323,4 +323,8 @@ public class UserService implements UserDetailsService {
 
         return user;
     }
+
+    public void updateAccountSettings(Long userId, Boolean enable, Boolean isNotLocked) {
+        userEntityService.updateAccountSettings(userId, enable, isNotLocked);
+    }
 }
