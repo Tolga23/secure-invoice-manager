@@ -327,4 +327,18 @@ public class UserService implements UserDetailsService {
     public void updateAccountSettings(Long userId, Boolean enable, Boolean isNotLocked) {
         userEntityService.updateAccountSettings(userId, enable, isNotLocked);
     }
+
+    public UserDto toggleTwoFactorVerification(String email) {
+        UserDto user = getUserByEmail(email);
+
+        if (user.getPhone().isEmpty() || user.getPhone().isBlank()){
+            throw new ApiException(UserErrorMessages.PHONE_NUMBER_NOT_FOUND);
+        }
+
+        user.setUsingAuth(!user.isUsingAuth());
+
+        userEntityService.updateIsUsingAuthByEmail(email, user.isUsingAuth());
+
+        return user;
+    }
 }

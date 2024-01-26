@@ -13,7 +13,8 @@ public enum UserErrorMessages implements BaseErrorMessages {
 
     PASSWORD_NOT_EQUAL("Password don't match. Please try again."),
     PASSWORD_IS_WRONG("Current password is wrong. Please try again."),
-    INVALID_KEY("Key is invalid");
+    INVALID_KEY("Key is invalid"),
+    PHONE_NUMBER_NOT_FOUND("You need to add a phone number to your account before you can enable two-factor authentication.");
     private String message;
 
     UserErrorMessages(String message) {

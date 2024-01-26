@@ -57,10 +57,9 @@ public class UserController {
     }
 
     @PatchMapping("/update")
-    public ResponseEntity updateUser(@RequestBody @Valid ProfileUpdateDto user) throws InterruptedException {
-        TimeUnit.SECONDS.sleep(1);
+    public ResponseEntity updateUser(@RequestBody @Valid ProfileUpdateDto user) {
         UserDto updatedUser = userService.updateUser(user);
-        return ResponseEntity.ok(HttpResponse.of(OK, "User updated", Map.of("user", updatedUser)));
+        return ResponseEntity.ok(HttpResponse.of(OK, "User updated", Map.of("user", updatedUser,"roles",roleService.getRoles())));
     }
 
     @PatchMapping("/update/settings")
@@ -68,6 +67,13 @@ public class UserController {
         UserDto userDto = getAuthenticatedUser(authentication);
         userService.updateAccountSettings(userDto.getId(),form.getEnable(),form.getIsNotLocked());
         return ResponseEntity.ok(HttpResponse.of(OK, "Account setting updated.", Map.of("user", userService.getUserById(userDto.getId()))));
+    }
+
+    @PatchMapping("/update/2fa")
+    public ResponseEntity toggleTwoFactorVerification(Authentication authentication) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
+        UserDto userDto = userService.toggleTwoFactorVerification(getAuthenticatedUser(authentication).getEmail());
+        return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user", userService.getUserById(userDto.getId()))));
     }
 
     @GetMapping("/profile")

@@ -47,4 +47,8 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
     public void updateAccountSettings(Long userId, Boolean enable, Boolean isNotLocked) {
         getDao().updateAccountSettings(userId,enable,isNotLocked);
     }
+
+    public void updateIsUsingAuthByEmail(String email, Boolean isUsingAuth) {
+        getDao().updateIsUsingAuthByEmail(email,isUsingAuth);
+    }
 }
