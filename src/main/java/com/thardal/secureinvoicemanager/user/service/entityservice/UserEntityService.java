@@ -16,10 +16,6 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
         return getDao().getUserByEmail(email);
     }
 
-    public User getUserById(Long userId) {
-        return getDao().getUserById(userId);
-    }
-
     public User findUserByVerificationCode(String code){
         return getDao().findUserByVerificationCode(code);
     }
@@ -50,5 +46,9 @@ public class UserEntityService extends BaseEntityService<User, UserRepository> {
 
     public void updateIsUsingAuthByEmail(String email, Boolean isUsingAuth) {
         getDao().updateIsUsingAuthByEmail(email,isUsingAuth);
+    }
+
+    public void updateImageUrl(Long userId, String imageUrl) {
+        getDao().updateImageUrl(userId,imageUrl);
     }
 }

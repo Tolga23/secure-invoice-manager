@@ -13,15 +13,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
 
 @RestController
@@ -74,6 +80,21 @@ public class UserController {
         TimeUnit.SECONDS.sleep(1);
         UserDto userDto = userService.toggleTwoFactorVerification(getAuthenticatedUser(authentication).getEmail());
         return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user", userService.getUserById(userDto.getId()))));
+    }
+
+    @PatchMapping("/update/image")
+    public ResponseEntity updateProfileImage(Authentication authentication, @RequestParam("image") MultipartFile image){
+        UserDto user = getAuthenticatedUser(authentication);
+        userService.updateProfileImage(user,image);
+        return ResponseEntity.ok(HttpResponse.of(OK,"Profile image updated.",Map.of("user",userService.getUserAndRolesByUserId(user.getId()))));
+    }
+
+    @GetMapping(value = "/image/{fileName}", produces = IMAGE_PNG_VALUE)
+    public ResponseEntity getProfileImage(@PathVariable("fileName") String fileName) throws IOException {
+        Path imagePath = Paths.get(System.getProperty("user.home") + "/Downloads/SecurePhotos/" + fileName);
+        return Files.readAllBytes(imagePath).length > 0 ?
+                ResponseEntity.ok(Files.readAllBytes(imagePath)) :
+                ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST,"Image not found."));
     }
 
     @GetMapping("/profile")
