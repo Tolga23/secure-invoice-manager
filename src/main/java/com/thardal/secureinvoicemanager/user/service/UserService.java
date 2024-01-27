@@ -22,8 +22,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +37,7 @@ import static com.thardal.secureinvoicemanager.base.utils.SmsUtils.sendSMS;
 import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.PASSWORD;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.time.DateFormatUtils.format;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
@@ -186,6 +191,25 @@ public class UserService implements UserDetailsService {
         return userConverter.toDto(user);
     }
 
+    public UserDto getUserAndRolesByUserId(Long userId) {
+        User user = userEntityService.findById(userId).orElse(null);
+        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
+        return userDto;
+    }
+
+    public UserDto getUserByEmail(String email) {
+        User user = userEntityService.getUserByEmail(email);
+
+        if (user == null) {
+            log.error("User not found in the database");
+            throw new ApiException(UserErrorMessages.USER_NOT_FOUND);
+        }
+        log.info("User found in the database: {}", email);
+
+        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
+        return userDto;
+    }
+
     private Long isVerificationCodeExpired(String code) {
         return twoFactorVerificationService.isVerificationCodeExpiredByCode(code);
     }
@@ -214,19 +238,6 @@ public class UserService implements UserDetailsService {
     private UserPrincipal createUserDetails(UserDto user) {
         String permission = roleService.getRoleByUserId(user.getId()).getPermission();
         return new UserPrincipal(user, permission);
-    }
-
-    public UserDto getUserByEmail(String email) {
-        User user = userEntityService.getUserByEmail(email);
-
-        if (user == null) {
-            log.error("User not found in the database");
-            throw new ApiException(UserErrorMessages.USER_NOT_FOUND);
-        }
-        log.info("User found in the database: {}", email);
-
-        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
-        return userDto;
     }
 
     public void sendVerificationCode(UserDto user) {
@@ -331,7 +342,7 @@ public class UserService implements UserDetailsService {
     public UserDto toggleTwoFactorVerification(String email) {
         UserDto user = getUserByEmail(email);
 
-        if (user.getPhone().isEmpty() || user.getPhone().isBlank()){
+        if (user.getPhone().isEmpty() || user.getPhone().isBlank()) {
             throw new ApiException(UserErrorMessages.PHONE_NUMBER_NOT_FOUND);
         }
 
@@ -340,5 +351,37 @@ public class UserService implements UserDetailsService {
         userEntityService.updateIsUsingAuthByEmail(email, user.isUsingAuth());
 
         return user;
+    }
+
+    public void updateProfileImage(UserDto user, MultipartFile image) {
+        String userImageUrl = setUserImageUrl(user.getId());
+        user.setImageUrl(userImageUrl);
+        saveImage(user.getId(), image);
+        userEntityService.updateImageUrl(user.getId(), userImageUrl);
+    }
+
+    private void saveImage(Long id, MultipartFile image) {
+        Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/Downloads/SecurePhotos/").toAbsolutePath().normalize();
+        if (!Files.exists(fileStorageLocation)) {
+            try {
+                Files.createDirectories(fileStorageLocation);
+            } catch (Exception exception) {
+                throw new ApiException(GlobalErrorMessages.FILE_CANNOT_BE_SAVED);
+            }
+            log.info("Created directory: {}", fileStorageLocation);
+        }
+
+        try {
+            Files.copy(image.getInputStream(), fileStorageLocation.resolve(id + ".png"), REPLACE_EXISTING);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException(GlobalErrorMessages.FILE_CANNOT_BE_SAVED);
+        }
+        log.info("File saved: {}", fileStorageLocation);
+
+    }
+
+    private String setUserImageUrl(Long userId) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/image/" + userId + ".png").toUriString();
     }
 }
