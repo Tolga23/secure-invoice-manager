@@ -5,6 +5,7 @@ import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.security.provider.TokenProvider;
 import com.thardal.secureinvoicemanager.user.dto.*;
 import com.thardal.secureinvoicemanager.user.entity.UserPrincipal;
+import com.thardal.secureinvoicemanager.user.service.AuthService;
 import com.thardal.secureinvoicemanager.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -37,8 +38,7 @@ public class UserController {
     private static final String TOKEN_PREFIX = "Bearer ";
     private final UserService userService;
     private final RoleService roleService;
-    private final AuthenticationManager authenticationManager;
-    private final TokenProvider tokenProvider;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity findAll() {
@@ -57,8 +57,8 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid UserLoginDto userLoginDto) {
 
-        Authentication authentication = authenticate(userLoginDto.getEmail(), userLoginDto.getPassword());
-        UserDto user = getLoggedUser(authentication);
+        Authentication authentication = authService.authenticate(userLoginDto.getEmail(), userLoginDto.getPassword());
+        UserDto user = authService.getLoggedUser(authentication);
         return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
     }
 
@@ -70,7 +70,7 @@ public class UserController {
 
     @PatchMapping("/update/settings")
     public ResponseEntity updateAccountSettings(Authentication authentication, @RequestBody @Valid AccountSettingsDto form) {
-        UserDto userDto = getAuthenticatedUser(authentication);
+        UserDto userDto = authService.getAuthenticatedUser(authentication);
         userService.updateAccountSettings(userDto.getId(),form.getEnable(),form.getIsNotLocked());
         return ResponseEntity.ok(HttpResponse.of(OK, "Account setting updated.", Map.of("user", userService.getUserById(userDto.getId()))));
     }
@@ -78,13 +78,13 @@ public class UserController {
     @PatchMapping("/update/2fa")
     public ResponseEntity toggleTwoFactorVerification(Authentication authentication) throws InterruptedException {
         TimeUnit.SECONDS.sleep(1);
-        UserDto userDto = userService.toggleTwoFactorVerification(getAuthenticatedUser(authentication).getEmail());
+        UserDto userDto = userService.toggleTwoFactorVerification(authService.getAuthenticatedUser(authentication).getEmail());
         return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user", userService.getUserById(userDto.getId()))));
     }
 
     @PatchMapping("/update/image")
     public ResponseEntity updateProfileImage(Authentication authentication, @RequestParam("image") MultipartFile image){
-        UserDto user = getAuthenticatedUser(authentication);
+        UserDto user = authService.getAuthenticatedUser(authentication);
         userService.updateProfileImage(user,image);
         return ResponseEntity.ok(HttpResponse.of(OK,"Profile image updated.",Map.of("user",userService.getUserAndRolesByUserId(user.getId()))));
     }
@@ -99,7 +99,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity profile(Authentication authentication) {
-        UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
+        UserDto user = userService.getUserByEmail(authService.getAuthenticatedUser(authentication).getEmail());
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user,"roles",roleService.getRoles())));
     }
@@ -127,7 +127,7 @@ public class UserController {
 
     @PatchMapping("/update/password")
     public ResponseEntity updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordDto user) {
-        UserDto userDto = getAuthenticatedUser(authentication);
+        UserDto userDto = authService.getAuthenticatedUser(authentication);
 
         userService.updatePassword(userDto.getId(), user.getCurrentPassword(), user.getNewPassword(), user.getConfirmPassword());
         return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
@@ -135,7 +135,7 @@ public class UserController {
 
     @PatchMapping("/update/role/{roleName}")
     public ResponseEntity updateRole(Authentication authentication, @PathVariable("roleName") String roleName) {
-        UserDto user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
+        UserDto user = userService.getUserByEmail(authService.getAuthenticatedUser(authentication).getEmail());
         roleService.updateRoleToUser(user.getId(),roleName);
         return ResponseEntity.ok(HttpResponse.of(OK,"Role successfully updated.",Map.of("user", userService.getUserByEmail(user.getEmail()),"roles",roleService.getRoles())));
     }
@@ -145,8 +145,8 @@ public class UserController {
         UserDto user = userService.verifyCode(email, code);
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
-                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
-                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
+                "access_token", authService.createAccessToken(getUserPrincipal(user)),
+                "refresh_token", authService.createRefreshToken(getUserPrincipal(user)))));
     }
 
     @GetMapping("/verify/account/{key}")
@@ -160,9 +160,9 @@ public class UserController {
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
         if (isHeaderTokenValid(request)) {
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-            UserDto user = userService.getUserById(tokenProvider.getSubject(token, request));
+            UserDto user = userService.getUserById(authService.getSubject(token, request));
             return ResponseEntity.ok(HttpResponse.of(OK, "Token refreshed", Map.of("user", user,
-                    "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
+                    "access_token", authService.createAccessToken(getUserPrincipal(user)),
                     "refresh_token", token)));
         } else {
             return ResponseEntity.badRequest().body(HttpResponse.error(BAD_REQUEST, "Refresh Token missing or invalid", "Refresh Token missing or invalid"));
@@ -172,7 +172,7 @@ public class UserController {
     private boolean isHeaderTokenValid(HttpServletRequest request) {
         return request.getHeader(AUTHORIZATION) != null
                 && request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
-                && tokenProvider.isTokenValid(tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()), request),
+                && authService.isTokenValid(authService.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()), request),
                 request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()));
     }
 
@@ -185,8 +185,8 @@ public class UserController {
         userService.sendVerificationCode(user);
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
-                "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
-                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user)))));
+                "access_token", authService.createAccessToken(getUserPrincipal(user)),
+                "refresh_token", authService.createRefreshToken(getUserPrincipal(user)))));
     }
 
     private ResponseEntity sendVerificationCode(UserDto user) {
@@ -198,19 +198,6 @@ public class UserController {
     private UserPrincipal getUserPrincipal(UserDto user) {
         return new UserPrincipal(user,
                 roleService.getRoleByUserId(user.getId()).getRoleName());
-    }
-
-    private UserDto getAuthenticatedUser(Authentication authentication) {
-        return ((UserDto) authentication.getPrincipal());
-    }
-
-    private UserDto getLoggedUser(Authentication authentication) {
-        return ((UserPrincipal) authentication.getPrincipal()).getUser();
-    }
-
-    private Authentication authenticate(String email, String password) {
-        Authentication authentication = authenticationManager.authenticate(unauthenticated(email, password));
-        return authentication;
     }
 
     private URI getUri() {
