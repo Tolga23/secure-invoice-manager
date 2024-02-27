@@ -22,7 +22,7 @@ public class EventService {
         return eventEntityService.getUserEventByUserId(userId);
     }
 
-    public void addEvent(String email, EventType eventType, String device, String ipAddress) {
+    public void addUserEvent(String email, EventType eventType, String device, String ipAddress) {
         try {
             eventEntityService.addUserEvent(email, eventType.toString(), device, ipAddress);
         } catch (Exception ex) {
