@@ -113,7 +113,7 @@ public class UserController {
     public ResponseEntity profile(Authentication authentication) {
         UserDto user = userService.getUserByEmail(authService.getAuthenticatedUser(authentication).getEmail());
 
-        return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user,"events", eventService.getEventsByUserId(user.getId()), "roles", roleService.getRoles())));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Profile Retrieved", Map.of("user", user,"events", eventService.getUserEventsByUserId(user.getId()), "roles", roleService.getRoles())));
     }
 
     @GetMapping("/resetpassword/{email}")

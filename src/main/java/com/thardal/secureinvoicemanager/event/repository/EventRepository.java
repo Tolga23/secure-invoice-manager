@@ -10,11 +10,19 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.List;
 
 @Transactional
 @Repository
 public interface EventRepository extends JpaRepository<UserEvents,Long> {
     Collection<UserEvents> getUserEventByUserId(Long userId);
+
+    @Modifying
+    @Query(value = "SELECT u.device, u.ip_address, e.type, e.description, u.created_at " +
+            "FROM user_event u " +
+            "JOIN events e ON u.event_id = e.id " +
+            "WHERE u.user_id = :userId order by u.created_at DESC LIMIT 10", nativeQuery = true)
+    List<Object[]> getUserEventsByUserId(Long userId);
 
     @Modifying
     @Query(value =  "INSERT INTO user_event (user_id, event_id, device, ip_address) " +
