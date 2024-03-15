@@ -1,19 +1,16 @@
 package com.thardal.secureinvoicemanager.event.entity;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 @Entity
 @Table(name = "USER_EVENT")
-@Data
+@Getter
+@Setter
 public class UserEvents extends BaseEntity {
 
     @Id

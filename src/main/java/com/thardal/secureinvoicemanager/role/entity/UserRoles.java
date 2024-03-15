@@ -4,9 +4,12 @@ import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import lombok.Data;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "USER_ROLES")
 public class UserRoles extends BaseEntity {
 

@@ -2,12 +2,14 @@ package com.thardal.secureinvoicemanager.user.entity;
 
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "ResetPasswordVerifications")
 public class ResetPasswordVerifications extends BaseEntity {
 

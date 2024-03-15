@@ -48,7 +48,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer getCustomerById(Long id) {
-        return customerRepository.findById(id).get();
+        return customerRepository.findById(id).orElse(null);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public void addInvoiceToCustomer(Long customerId, Invoice invoice) {
         invoice.setInvoiceNumber(RandomStringUtils.randomAlphanumeric(8).toUpperCase());
-        Customer customer = customerRepository.findById(customerId).get();
+        Customer customer = customerRepository.findById(customerId).orElse(null);
         invoice.setCustomer(customer);
         invoiceRepository.save(invoice);
     }

@@ -3,11 +3,14 @@ package com.thardal.secureinvoicemanager.customer.entity;
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Collection;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Customer extends BaseEntity {
 
     @Id

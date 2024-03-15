@@ -1,23 +1,17 @@
 package com.thardal.secureinvoicemanager.user.entity;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+import lombok.*;
 
 
-@Data
 @Entity
 @Table(name = "USERS")
-@JsonInclude(NON_DEFAULT)
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends BaseEntity {
@@ -65,6 +59,6 @@ public class User extends BaseEntity {
     @Column(name = "IS_NOT_LOCKED")
     private boolean isNotLocked;
 
-    @Column(name = "IS_USİNG_AUTH")
+    @Column(name = "IS_USING_AUTH")
     private boolean isUsingAuth;
 }

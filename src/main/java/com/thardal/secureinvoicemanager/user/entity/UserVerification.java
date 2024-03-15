@@ -1,16 +1,13 @@
 package com.thardal.secureinvoicemanager.user.entity;
 
 import com.thardal.secureinvoicemanager.base.entity.BaseEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Data
 @Table(name = "USER_VERIFICATION")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
