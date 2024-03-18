@@ -1,7 +1,9 @@
 package com.thardal.secureinvoicemanager.customer.service.impl;
 
+
 import com.thardal.secureinvoicemanager.customer.entity.Customer;
 import com.thardal.secureinvoicemanager.customer.entity.Invoice;
+import com.thardal.secureinvoicemanager.customer.entity.Stats;
 import com.thardal.secureinvoicemanager.customer.repository.CustomerRepository;
 import com.thardal.secureinvoicemanager.customer.repository.InvoiceRepository;
 import com.thardal.secureinvoicemanager.customer.service.CustomerService;
@@ -38,7 +40,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Page<Customer> getCustomers(int page, int size) {
-        return customerRepository.findAll(of(page,size));
+        return customerRepository.findAll(of(page, size));
     }
 
     @Override
@@ -53,7 +55,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Page<Customer> searchCustomer(String name, int page, int size) {
-        return customerRepository.findByNameContaining(name, of(page,size));
+        return customerRepository.findByNameContaining(name, of(page, size));
     }
 
     @Override
@@ -64,7 +66,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Page<Invoice> getInvoices(int page, int size) {
-        return invoiceRepository.findAll(of(page,size));
+        return invoiceRepository.findAll(of(page, size));
     }
 
     @Override
@@ -78,5 +80,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Invoice getInvoiceById(Long invoiceId) {
         return null;
+    }
+
+    @Override
+    public Stats getStats() {
+        return customerRepository.getStats();
     }
 }

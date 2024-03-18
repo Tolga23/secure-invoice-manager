@@ -2,6 +2,7 @@ package com.thardal.secureinvoicemanager.customer.service;
 
 import com.thardal.secureinvoicemanager.customer.entity.Customer;
 import com.thardal.secureinvoicemanager.customer.entity.Invoice;
+import com.thardal.secureinvoicemanager.customer.entity.Stats;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -27,4 +28,6 @@ public interface CustomerService {
     void addInvoiceToCustomer(Long customerId, Invoice invoice);
 
     Invoice getInvoiceById(Long invoiceId);
+
+    Stats getStats();
 }

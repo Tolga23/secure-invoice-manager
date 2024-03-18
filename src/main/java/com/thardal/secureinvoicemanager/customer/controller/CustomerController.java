@@ -28,7 +28,8 @@ public class CustomerController {
     public ResponseEntity<HttpResponse> getCustomers(@AuthenticationPrincipal UserDto user, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok(HttpResponse.of(OK, "Customers retrieved successfully", Map.of(
                 "user", userService.getUserById(user.getId()),
-                "customers", customerService.getCustomers(page.orElse(0), size.orElse(10)))));
+                "customers", customerService.getCustomers(page.orElse(0), size.orElse(10)),
+                "stats", customerService.getStats())));
     }
 
     @PostMapping("/create")
