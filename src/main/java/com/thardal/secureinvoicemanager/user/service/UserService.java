@@ -1,6 +1,5 @@
 package com.thardal.secureinvoicemanager.user.service;
 
-import com.thardal.secureinvoicemanager.base.enums.BaseErrorMessages;
 import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
 import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
@@ -188,7 +187,8 @@ public class UserService implements UserDetailsService {
 
     public UserDto getUserById(Long userId) {
         User user = userEntityService.findById(userId).orElse(null);
-        return userConverter.toDto(user);
+        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
+        return userDto;
     }
 
     public UserDto getUserAndRolesByUserId(Long userId) {
@@ -247,7 +247,7 @@ public class UserService implements UserDetailsService {
         try {
             twoFactorVerificationService.deleteByUserId(user.getId());
             twoFactorVerificationService.updateByUserIdAndVerificationCodeAndExpirationDate(user.getId(), verificationCode, expirationDate);
-            //sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
+//            sendSMS(user.getPhone(), "From: SecureInvoice \nVerification code\n" + verificationCode);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
@@ -304,7 +304,7 @@ public class UserService implements UserDetailsService {
 
     private void validateUser(UserDto user) {
         if (!user.isEnable()) {
-            log.error("USER DISABLED ERROR: {}", user.isEnable());
+            log.error("USER DISABLED ERROR: {}", user.getEmail());
             throw new DisabledException("User is disabled");
         }
     }
