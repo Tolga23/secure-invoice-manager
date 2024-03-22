@@ -37,7 +37,7 @@ public class CustomerController {
         return ResponseEntity.created(URI.create("")).body(
                 HttpResponse.of(CREATED, "Customer created successfully", Map.of(
                         "user", userService.getUserById(user.getId()),
-                        "customer", customerService.createCustomer(customer))));
+                        "customers", customerService.createCustomer(customer))));
     }
 
     @GetMapping("/get/{id}")
@@ -51,7 +51,7 @@ public class CustomerController {
     public ResponseEntity<HttpResponse> searchCustomer(@AuthenticationPrincipal UserDto user, Optional<String> name, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok(HttpResponse.of(OK, "Customer retrieved successfully", Map.of(
                 "user", userService.getUserById(user.getId()),
-                "customer", customerService.searchCustomer(name.orElse(""), page.orElse(0), size.orElse(10)))));
+                "customers", customerService.searchCustomer(name.orElse(""), page.orElse(0), size.orElse(10)))));
     }
 
     @PutMapping("/update")
