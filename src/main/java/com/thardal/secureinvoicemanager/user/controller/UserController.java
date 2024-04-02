@@ -84,12 +84,11 @@ public class UserController {
     }
 
     @PatchMapping("/update/2fa")
-    public ResponseEntity toggleTwoFactorVerification(Authentication authentication) throws InterruptedException {
-        TimeUnit.SECONDS.sleep(1);
+    public ResponseEntity toggleTwoFactorVerification(Authentication authentication) {
         UserDto userDto = userService.toggleTwoFactorVerification(authService.getAuthenticatedUser(authentication).getEmail());
         publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.MFA_UPDATE));
 
-        return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user", userService.getUserAndRolesByUserId(userDto.getId()),"events",eventService.getUserEventsByUserId(userDto.getId()), "roles", roleService.getRoles())));
+        return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user",userDto,"events",eventService.getUserEventsByUserId(userDto.getId()), "roles", roleService.getRoles())));
     }
 
     @PatchMapping("/update/image")
