@@ -2,6 +2,8 @@ package com.thardal.secureinvoicemanager.customer.entity;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @Builder
@@ -10,6 +12,6 @@ import lombok.*;
 public class Stats {
     private Long totalCustomers;
     private Long totalInvoices;
-    private Long totalInvoicesPaid;
+    private Double totalInvoicesPaid;
 
 }
