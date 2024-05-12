@@ -3,7 +3,8 @@ package com.thardal.secureinvoicemanager.base.enums;
 public enum GlobalErrorMessages implements BaseErrorMessages{
     ERROR_OCCURRED("Something went wrong. Please try again later"),
 
-    FILE_CANNOT_BE_SAVED("File cannot be saved. Please try again later");
+    FILE_CANNOT_BE_SAVED("File cannot be saved. Please try again later"),
+    UNABLE_TO_EXPORT_REPORT("Unable to export report. Please try again later");
     private String message;
 
     GlobalErrorMessages(String message){
