@@ -69,9 +69,9 @@ public class CustomerController {
                         "invoice", customerService.createInvoice(invoice))));
     }
 
-    @PostMapping("/invoice/new")
+    @GetMapping("/invoice/new")
     public ResponseEntity<HttpResponse> newInvoice(@AuthenticationPrincipal UserDto user) {
-        return ResponseEntity.ok(HttpResponse.of(OK, "Invoice added to customer successfully", Map.of(
+        return ResponseEntity.ok(HttpResponse.of(OK,"", Map.of(
                 "user", userService.getUserById(user.getId()),
                 "customer", customerService.getCustomers())));
     }
@@ -80,20 +80,22 @@ public class CustomerController {
     public ResponseEntity<HttpResponse> getInvoices(@AuthenticationPrincipal UserDto user, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok(HttpResponse.of(OK, "Invoices retrieved successfully", Map.of(
                 "user", userService.getUserById(user.getId()),
-                "invoices", customerService.getInvoices(page.orElse(0), size.orElse(10)))));
+                "page", customerService.getInvoices(page.orElse(0), size.orElse(10)))));
     }
 
     @GetMapping("/invoice/get/{id}")
     public ResponseEntity<HttpResponse> getInvoice(@AuthenticationPrincipal UserDto user, @PathVariable("id") Long invoiceId) {
+        Invoice invoice = customerService.getInvoiceById(invoiceId);
         return ResponseEntity.ok(HttpResponse.of(OK, "Invoice retrieved successfully", Map.of(
                 "user", userService.getUserById(user.getId()),
-                "invoice", customerService.getInvoiceById(invoiceId))));
+                "invoice", invoice,
+                "customer", invoice.getCustomer())));
     }
 
     @PostMapping("/invoice/add/{id}")
     public ResponseEntity<HttpResponse> addInvoiceToCustomer(@AuthenticationPrincipal UserDto user, @PathVariable("id") Long customerId, @RequestBody Invoice invoice) {
         customerService.addInvoiceToCustomer(customerId, invoice);
-        return ResponseEntity.ok(HttpResponse.of(OK, "Invoice added to customer successfully", Map.of(
+        return ResponseEntity.ok(HttpResponse.of(OK, "Invoice added to customer with ID: "+ customerId, Map.of(
                 "user", userService.getUserById(user.getId()),
                 "customer", customerService.getCustomers())));
     }

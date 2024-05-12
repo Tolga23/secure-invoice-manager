@@ -79,7 +79,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Invoice getInvoiceById(Long invoiceId) {
-        return null;
+        return invoiceRepository.findById(invoiceId).orElse(null);
     }
 
     @Override
