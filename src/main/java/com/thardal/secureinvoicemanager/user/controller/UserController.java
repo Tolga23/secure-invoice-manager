@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
@@ -50,11 +49,12 @@ public class UserController {
         return ResponseEntity.created(getUri()).body(userDtoList);
     }
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity save(@RequestBody @Valid UserSaveRequestDto userSaveRequestDto) {
         UserDto userDto = userService.save(userSaveRequestDto);
 
-        return ResponseEntity.ok(HttpResponse.of(CREATED, "Registered successfully.", Map.of("user", userDto)));
+        return ResponseEntity.ok(HttpResponse.of(CREATED, String.format("Registered successfully for" +
+                " %s",userDto.getFirstName()), Map.of("user", userDto)));
     }
 
     @PostMapping("/login")
@@ -129,9 +129,9 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.of(OK, "Please enter a new password.", Map.of("user", userDto)));
     }
 
-    @PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
-    public ResponseEntity resetPassword(@PathVariable("key") String key, @PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
-        userService.renewPassword(key, password, confirmPassword);
+    @PutMapping("/resetpassword")
+    public ResponseEntity resetPassword(@RequestBody @Valid NewPasswordForm newPasswordForm) {
+        userService.renewPassword(newPasswordForm.getUserId(), newPasswordForm.getPassword(), newPasswordForm.getConfirmPassword());
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed."));
     }

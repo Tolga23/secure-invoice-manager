@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.thardal.secureinvoicemanager.base.utils.SmsUtils.sendSMS;
 import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.PASSWORD;
@@ -260,6 +259,19 @@ public class UserService implements UserDetailsService {
 
         try {
             userEntityService.updatePasswordByUrl(passwordEncoder.encode(password), getVerificationUrl(key, PASSWORD.getType()));
+
+        } catch (ApiException ex) {
+            throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
+        }
+
+
+    }
+
+    public void renewPassword(Long userId, String password, String confirmPassword) {
+        if (!password.equals(confirmPassword)) throw new ApiException(UserErrorMessages.PASSWORD_NOT_EQUAL);
+
+        try {
+            userEntityService.updatePassword(userId, passwordEncoder.encode(password));
 
         } catch (ApiException ex) {
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);

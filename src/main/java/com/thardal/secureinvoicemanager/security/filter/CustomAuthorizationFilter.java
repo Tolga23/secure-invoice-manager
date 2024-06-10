@@ -15,20 +15,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static com.thardal.secureinvoicemanager.base.utils.ExceptionUtils.processError;
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static java.util.Optional.ofNullable;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
-    private static final String[] PUBLIC_ROUTES = {"/api/user/login/**", "/api/user/verify/**", "/api/user/refresh/token", "/api/user/image"};
+    private static final String[] PUBLIC_ROUTES = {"/api/user/login/**", "/api/user/verify/**", "/api/user/refresh/token", "/api/user/image", "/api/user/resetpassword/**"};
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HTTP_OPTIONS_METHOD = "OPTIONS";
 

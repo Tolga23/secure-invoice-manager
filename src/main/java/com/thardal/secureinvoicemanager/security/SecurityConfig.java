@@ -26,7 +26,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_URLS = {"/api/user/login/**", "/api/user/verify/**", "/api/user/**", "/api/user/image/**"};
+    private static final String[] PUBLIC_URLS = {"/api/user/login/**", "/api/user/verify/**", "/api/user/image/**", "/api/user/register/**", "/api/user/resetpassword/**"};
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;
