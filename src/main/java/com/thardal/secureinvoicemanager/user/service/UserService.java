@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.thardal.secureinvoicemanager.user.enums.RoleType.USER_ROLE;
 import static com.thardal.secureinvoicemanager.user.enums.VerificationType.ACCOUNT;
@@ -50,11 +51,12 @@ public class UserService implements UserDetailsService {
     private UserVerificationService userVerificationService;
     private PasswordEncoder passwordEncoder;
     private TwoFactorVerificationService twoFactorVerificationService;
-
     private ResetPasswordVerificationsService resetPasswordVerificationsService;
+    private EmailService emailService;
 
     public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService,
-                       PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService, ResetPasswordVerificationsService resetPasswordVerificationsService) {
+                       PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService, ResetPasswordVerificationsService resetPasswordVerificationsService,
+                       EmailService emailService) {
         this.userEntityService = userEntityService;
         this.userConverter = userConverter;
         this.roleService = roleService;
@@ -62,6 +64,7 @@ public class UserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
         this.twoFactorVerificationService = twoFactorVerificationService;
         this.resetPasswordVerificationsService = resetPasswordVerificationsService;
+        this.emailService = emailService;
     }
 
     public List<UserDto> findAll() {
@@ -83,9 +86,9 @@ public class UserService implements UserDetailsService {
 
             user = userEntityService.save(user);
 
-            userVerification(user);
+            String verificationUrl = userVerification(user);
             roleService.addRoleToUser(user.getId(), USER_ROLE.toString());
-
+            sendEmail(user.getFirstName(), user.getEmail(),verificationUrl, ACCOUNT);
         } catch (DataIntegrityViolationException ex) {
             log.error(ex.getMessage());
             throw new DataIntegrityViolationException(UserErrorMessages.EMAIL_ALREADY_IN_USE.getMessage());
@@ -97,6 +100,20 @@ public class UserService implements UserDetailsService {
         UserDto userDto = userConverter.toDto(user);
 
         return userDto;
+    }
+
+    private void sendEmail(String firstName, String email, String verificationUrl, VerificationType verificationType) {
+        CompletableFuture.runAsync(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
+                } catch (Exception ex) {
+                    log.error("Error sending email to: " + email, ex);
+                }
+            }
+        });
+
     }
 
     public UserDto verifyCode(String email, String code) {
@@ -129,6 +146,8 @@ public class UserService implements UserDetailsService {
             resetPasswordVerificationsService.deleteResetPasswordVerificationsByUserId(userByEmail.getId());
             resetPasswordVerificationsService.insertResetPasswordVerifications(userByEmail.getId(), expirationDate, verificationUrl);
             log.info(verificationUrl);
+            sendEmail(userByEmail.getFirstName(), userByEmail.getEmail(), verificationUrl, PASSWORD);
+            log.info("Email sent to: {}", email);
         } catch (Exception ex) {
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
@@ -221,9 +240,10 @@ public class UserService implements UserDetailsService {
         return dto;
     }
 
-    private void userVerification(User user) {
+    private String userVerification(User user) {
         String verificationUrl = getVerificationUrl(getRandomUUID(), ACCOUNT.getType());
         userVerificationService.createUserVerification(user.getId(), verificationUrl);
+        return verificationUrl;
     }
 
     @Override
