@@ -13,6 +13,7 @@ import com.thardal.secureinvoicemanager.user.enums.UserErrorMessages;
 import com.thardal.secureinvoicemanager.user.enums.VerificationType;
 import com.thardal.secureinvoicemanager.user.exception.ApiException;
 import com.thardal.secureinvoicemanager.user.service.entityservice.UserEntityService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.DisabledException;
@@ -42,37 +43,22 @@ import static org.apache.commons.lang3.time.DateFormatUtils.format;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class UserService implements UserDetailsService {
-    private static String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
-    private UserEntityService userEntityService;
-    private UserConverter userConverter;
-    private RoleService roleService;
-    private UserVerificationService userVerificationService;
-    private PasswordEncoder passwordEncoder;
-    private TwoFactorVerificationService twoFactorVerificationService;
-    private ResetPasswordVerificationsService resetPasswordVerificationsService;
-    private EmailService emailService;
-
-    public UserService(UserEntityService userEntityService, UserConverter userConverter, RoleService roleService, UserVerificationService userVerificationService,
-                       PasswordEncoder passwordEncoder, TwoFactorVerificationService twoFactorVerificationService, ResetPasswordVerificationsService resetPasswordVerificationsService,
-                       EmailService emailService) {
-        this.userEntityService = userEntityService;
-        this.userConverter = userConverter;
-        this.roleService = roleService;
-        this.userVerificationService = userVerificationService;
-        this.passwordEncoder = passwordEncoder;
-        this.twoFactorVerificationService = twoFactorVerificationService;
-        this.resetPasswordVerificationsService = resetPasswordVerificationsService;
-        this.emailService = emailService;
-    }
+    private final UserEntityService userEntityService;
+    private final UserConverter userConverter;
+    private final RoleService roleService;
+    private final UserVerificationService userVerificationService;
+    private final PasswordEncoder passwordEncoder;
+    private final TwoFactorVerificationService twoFactorVerificationService;
+    private final ResetPasswordVerificationsService resetPasswordVerificationsService;
+    private final EmailService emailService;
 
     public List<UserDto> findAll() {
         List<User> userList = userEntityService.findAll();
 
-        List<UserDto> userDtoList = userConverter.toDtoList(userList);
-
-        return userDtoList;
+        return userConverter.toDtoList(userList);
     }
 
     public UserDto save(UserSaveRequestDto userSaveRequestDto) {
@@ -97,20 +83,15 @@ public class UserService implements UserDetailsService {
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
 
-        UserDto userDto = userConverter.toDto(user);
-
-        return userDto;
+        return userConverter.toDto(user);
     }
 
     private void sendEmail(String firstName, String email, String verificationUrl, VerificationType verificationType) {
-        CompletableFuture.runAsync(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
-                } catch (Exception ex) {
-                    log.error("Error sending email to: " + email, ex);
-                }
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
+            } catch (Exception ex) {
+                log.error("Error sending email to: " + email, ex);
             }
         });
 
@@ -160,9 +141,7 @@ public class UserService implements UserDetailsService {
         try {
             userEntityService.updateUserEnabledById(user.getId());
 
-            UserDto dto = userConverter.toDto(user);
-
-            return dto;
+            return userConverter.toDto(user);
         } catch (Exception ex) {
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
@@ -205,14 +184,12 @@ public class UserService implements UserDetailsService {
 
     public UserDto getUserById(Long userId) {
         User user = userEntityService.findById(userId).orElse(null);
-        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
-        return userDto;
+        return userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
     }
 
     public UserDto getUserAndRolesByUserId(Long userId) {
         User user = userEntityService.findById(userId).orElse(null);
-        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
-        return userDto;
+        return userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
     }
 
     public UserDto getUserByEmail(String email) {
@@ -224,8 +201,7 @@ public class UserService implements UserDetailsService {
         }
         log.info("User found in the database: {}", email);
 
-        UserDto userDto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
-        return userDto;
+        return userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
     }
 
     private Long isVerificationCodeExpired(String code) {
@@ -235,9 +211,7 @@ public class UserService implements UserDetailsService {
     public UserDto findUserByVerificationCode(String code) {
         User user = userEntityService.findUserByVerificationCode(code);
 
-        UserDto dto = userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
-
-        return dto;
+        return userConverter.userAndRoleDto(user, roleService.getRoleByUserId(user.getId()));
     }
 
     private String userVerification(User user) {
@@ -302,13 +276,12 @@ public class UserService implements UserDetailsService {
 
     public UserDto verifyPasswordKey(String key) {
 
-        if (isLinkExpired(key, PASSWORD) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
+        if (isLinkExpired(key) != 0) throw new ApiException(UserErrorMessages.CODE_EXPIRED);
 
         try {
             User user = userEntityService.findUserByResetPasswordVerification(getVerificationUrl(key, PASSWORD.getType()));
-            UserDto dto = userConverter.toDto(user);
 
-            return dto;
+            return userConverter.toDto(user);
         } catch (BusinessException ex) {
             throw new BusinessException(GlobalErrorMessages.ERROR_OCCURRED);
         }
@@ -320,8 +293,8 @@ public class UserService implements UserDetailsService {
 
     // TODO Eğer key uygun formatte değilse direk exception çıkart
 
-    private Long isLinkExpired(String key, VerificationType password) {
-        Long isLinkValid = resetPasswordVerificationsService.isLinkExpired(getVerificationUrl(key, password.getType()));
+    private Long isLinkExpired(String key) {
+        Long isLinkValid = resetPasswordVerificationsService.isLinkExpired(getVerificationUrl(key, PASSWORD.getType()));
 
         if (isLinkValid == null) throw new ApiException(UserErrorMessages.INVALID_KEY);
 
@@ -342,8 +315,7 @@ public class UserService implements UserDetailsService {
     }
 
     private String encodedUserPassword(User user) {
-        String encodePassword = passwordEncoder.encode(user.getPassword());
-        return encodePassword;
+        return passwordEncoder.encode(user.getPassword());
     }
 
     private String getVerificationUrl(String key, String verificationType) {
@@ -355,8 +327,8 @@ public class UserService implements UserDetailsService {
     }
 
     private String getExpirationDate() {
-        String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
-        return expirationDate;
+        String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
+        return format(addDays(new Date(), 1), DATE_FORMAT);
     }
 
     private User getUserByVerificationUrl(String key) {
