@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Arrays;
 
 @SpringBootApplication
-public class SecureinvoicemanagerApplication {
+public class Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(SecureinvoicemanagerApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 
     @Bean

@@ -12,7 +12,7 @@ import lombok.Setter;
 public class Invoice extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "invoice_seq")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String invoiceNumber;
     private String services;
