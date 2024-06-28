@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
+import static com.thardal.secureinvoicemanager.security.constants.Constants.TOKEN_PREFIX;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
@@ -35,7 +36,6 @@ import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
 public class UserController {
-    private static final String TOKEN_PREFIX = "Bearer ";
     private final UserService userService;
     private final RoleService roleService;
     private final AuthService authService;
@@ -209,7 +209,7 @@ public class UserController {
 
     private UserPrincipal getUserPrincipal(UserDto user) {
         return new UserPrincipal(user,
-                roleService.getRoleByUserId(user.getId()).getRoleName());
+                roleService.getRoleByUserId(user.getId()));
     }
 
     private URI getUri() {

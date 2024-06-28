@@ -2,6 +2,7 @@ package com.thardal.secureinvoicemanager.user.service;
 
 import com.thardal.secureinvoicemanager.base.enums.GlobalErrorMessages;
 import com.thardal.secureinvoicemanager.base.exceptions.BusinessException;
+import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.converter.UserConverter;
 import com.thardal.secureinvoicemanager.user.dto.ProfileUpdateDto;
@@ -229,8 +230,8 @@ public class UserService implements UserDetailsService {
     }
 
     private UserPrincipal createUserDetails(UserDto user) {
-        String permission = roleService.getRoleByUserId(user.getId()).getPermission();
-        return new UserPrincipal(user, permission);
+        RoleDto role = roleService.getRoleByUserId(user.getId());
+        return new UserPrincipal(user, role);
     }
 
     public void sendVerificationCode(UserDto user) {

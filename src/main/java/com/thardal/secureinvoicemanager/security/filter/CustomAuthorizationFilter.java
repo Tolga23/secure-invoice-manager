@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.thardal.secureinvoicemanager.base.utils.ExceptionUtils.processError;
+import static com.thardal.secureinvoicemanager.security.constants.Constants.*;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -27,9 +28,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
-    private static final String[] PUBLIC_ROUTES = {"/api/user/login/**", "/api/user/verify/**", "/api/user/refresh/token", "/api/user/image", "/api/user/resetpassword/**"};
-    private static final String TOKEN_PREFIX = "Bearer ";
-    private static final String HTTP_OPTIONS_METHOD = "OPTIONS";
+
 
     // OncePerRequestFilter: This is a filter class provided by Spring Framework, ensuring that the filter's doFilterInternal method is invoked only once per request.
     @Override
@@ -54,7 +53,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
             log.error(exception.getMessage());
-            processError(request,response,exception);
+            processError(request, response, exception);
         }
     }
 

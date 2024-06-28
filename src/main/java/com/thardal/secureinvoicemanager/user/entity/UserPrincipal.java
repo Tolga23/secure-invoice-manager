@@ -1,25 +1,24 @@
 package com.thardal.secureinvoicemanager.user.entity;
 
+import com.thardal.secureinvoicemanager.role.dto.RoleDto;
 import com.thardal.secureinvoicemanager.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toList;
 
 @RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
     private final UserDto user;
-    private final String permission;
+    private final RoleDto role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return stream(permission.split(",".trim())).map(SimpleGrantedAuthority::new).collect(toList());
+//        return stream(permission.split(",".trim())).map(SimpleGrantedAuthority::new).collect(toList());
+        return AuthorityUtils.commaSeparatedStringToAuthorityList(role.getPermission());
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.thardal.secureinvoicemanager.event.entity;
 
-import com.thardal.secureinvoicemanager.event.enums.EventType;
 import jakarta.persistence.*;
 
 @Entity

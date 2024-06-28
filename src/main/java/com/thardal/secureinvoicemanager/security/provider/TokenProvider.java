@@ -23,20 +23,13 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
+import static com.thardal.secureinvoicemanager.security.constants.Constants.*;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
 @Component
 public class TokenProvider {
-
-    public static final String AUTHORITIES = "authorities";
-    public static final String TOKEN_CANNOT_BE_VERIFIED = "Token cannot be verified";
-    private static final String CUSTOM_MANAGEMENT_SERVICE = "CUSTOM_MANAGEMENT_SERVICE";
-    private static final String GET_SECURE = "GET_SECURE";
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 30_000_000;
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
-
     private final UserService userService;
 
     @Value("${jwt.secret}")
