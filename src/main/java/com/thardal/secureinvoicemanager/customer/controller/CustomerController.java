@@ -107,7 +107,7 @@ public class CustomerController {
     }
 
     @GetMapping("/download/report")
-    public ResponseEntity<Resource> downloadReport(@AuthenticationPrincipal UserDto user) {
+    public ResponseEntity<Resource> downloadReport() {
         List<Customer> customers = new ArrayList<>();
         customerService.getCustomers().forEach(customers::add);
         CustomerReport report = new CustomerReport(customers);

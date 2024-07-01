@@ -26,8 +26,8 @@ public interface EventRepository extends JpaRepository<UserEvents,Long> {
 
     @Modifying
     @Query(value =  "INSERT INTO user_event (user_id, event_id, device, ip_address) " +
-            "VALUES ((SELECT id FROM Users WHERE email = :email)," +
-            " (SELECT id FROM Events WHERE type = :eventType)," +
+            "VALUES ((SELECT id FROM users WHERE email = :email)," +
+            " (SELECT id FROM events WHERE type = :eventType)," +
             " :device, :ipAddress)", nativeQuery = true)
     void addUserEvent(@Param("email") String email,@Param("eventType") String eventType,  @Param("device") String device, @Param("ipAddress") String ipAddress);
 
