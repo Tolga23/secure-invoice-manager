@@ -1,8 +1,6 @@
 package com.thardal.secureinvoicemanager.user.controller;
 
 import com.thardal.secureinvoicemanager.base.entity.HttpResponse;
-import com.thardal.secureinvoicemanager.event.entity.NewUserEvent;
-import com.thardal.secureinvoicemanager.event.enums.EventType;
 import com.thardal.secureinvoicemanager.event.service.EventService;
 import com.thardal.secureinvoicemanager.role.service.RoleService;
 import com.thardal.secureinvoicemanager.user.dto.*;
@@ -63,7 +61,7 @@ public class UserController {
         Authentication authentication = authService.authenticate(userLoginDto.getEmail(), userLoginDto.getPassword());
         UserDto user = authService.getLoggedUser(authentication);
 
-        if (user != null) publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.LOGIN_ATTEMPT));
+//        if (user != null) publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.LOGIN_ATTEMPT));
 
         return user.isUsingAuth() ? sendVerificationCode(user) : sendResponse(user);
     }
@@ -71,7 +69,7 @@ public class UserController {
     @PatchMapping("/update")
     public ResponseEntity updateUser(@RequestBody @Valid ProfileUpdateDto user) {
         UserDto userDto = userService.updateUser(user);
-        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.PROFILE_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.PROFILE_UPDATE));
         return ResponseEntity.ok(HttpResponse.of(OK, "User updated", Map.of("user", userService.getUserAndRolesByUserId(userDto.getId()),"events", eventService.getEventsByUserId(user.getId()), "roles", roleService.getRoles())));
     }
 
@@ -79,14 +77,14 @@ public class UserController {
     public ResponseEntity updateAccountSettings(Authentication authentication, @RequestBody @Valid AccountSettingsDto form) {
         UserDto userDto = authService.getAuthenticatedUser(authentication);
         userService.updateAccountSettings(userDto.getId(), form.getEnable(), form.getIsNotLocked());
-        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.ACCOUNT_SETTINGS_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.ACCOUNT_SETTINGS_UPDATE));
         return ResponseEntity.ok(HttpResponse.of(OK, "Account setting updated.", Map.of("user", userService.getUserAndRolesByUserId(userDto.getId()),"events",eventService.getUserEventsByUserId(userDto.getId()), "roles", roleService.getRoles())));
     }
 
     @PatchMapping("/update/2fa")
     public ResponseEntity toggleTwoFactorVerification(Authentication authentication) {
         UserDto userDto = userService.toggleTwoFactorVerification(authService.getAuthenticatedUser(authentication).getEmail());
-        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.MFA_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.MFA_UPDATE));
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Two factor verification updated.", Map.of("user",userDto,"events",eventService.getUserEventsByUserId(userDto.getId()), "roles", roleService.getRoles())));
     }
@@ -95,7 +93,7 @@ public class UserController {
     public ResponseEntity updateProfileImage(Authentication authentication, @RequestParam("image") MultipartFile image) {
         UserDto user = authService.getAuthenticatedUser(authentication);
         userService.updateProfileImage(user, image);
-        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.PROFILE_PICTURE_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.PROFILE_PICTURE_UPDATE));
 
         return ResponseEntity.ok(HttpResponse.of(OK, "Profile image updated.", Map.of("user", userService.getUserAndRolesByUserId(user.getId()),"events",eventService.getUserEventsByUserId(user.getId()), "roles", roleService.getRoles())));
     }
@@ -140,7 +138,7 @@ public class UserController {
     public ResponseEntity updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordDto user) {
         UserDto userDto = authService.getAuthenticatedUser(authentication);
         userService.updatePassword(userDto.getId(), user.getCurrentPassword(), user.getNewPassword(), user.getConfirmPassword());
-        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.PASSWORD_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(userDto.getEmail(), EventType.PASSWORD_UPDATE));
         return ResponseEntity.ok(HttpResponse.of(OK, "Password successfully changed.",Map.of("user", userService.getUserAndRolesByUserId(userDto.getId()),"events", eventService.getUserEventsByUserId(userDto.getId()), "roles", roleService.getRoles())));
     }
 
@@ -148,7 +146,7 @@ public class UserController {
     public ResponseEntity updateRole(Authentication authentication, @PathVariable("roleName") String roleName) {
         UserDto user = userService.getUserByEmail(authService.getAuthenticatedUser(authentication).getEmail());
         roleService.updateRoleToUser(user.getId(), roleName);
-        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.ROLE_UPDATE));
+//        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.ROLE_UPDATE));
         return ResponseEntity.ok(HttpResponse.of(OK, "Role successfully updated.", Map.of("user", userService.getUserByEmail(user.getEmail()), "roles", roleService.getRoles())));
     }
 
@@ -195,7 +193,7 @@ public class UserController {
 
     private ResponseEntity sendResponse(UserDto user) {
         userService.sendVerificationCode(user);
-        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.LOGIN_ATTEMPT_SUCCESS));
+//        publisher.publishEvent(new NewUserEvent(user.getEmail(), EventType.LOGIN_ATTEMPT_SUCCESS));
         return ResponseEntity.ok(HttpResponse.of(OK, "Login Success", Map.of("user", user,
                 "access_token", authService.createAccessToken(getUserPrincipal(user)),
                 "refresh_token", authService.createRefreshToken(getUserPrincipal(user)))));
