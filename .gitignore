@@ -38,3 +38,4 @@ build/
 *.yml
 *.properties
 
+.env.dev

@@ -1,23 +1,24 @@
-spring:
-  datasource:
-    url: jdbc:mysql://produurl:3306/securedb
-    password: root
-    username: root
-  jpa:
-    database-platform: org.hibernate.dialect.MySQL8InnoDBDialect
-    generate-ddl: true
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        globally_quoted_indentifiers: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
-  sql:
-    init:
-      mode: always
-  security:
-    user:
-      name: root
-      password: root
+# Database
+MYSQL_USERNAME: root
+MYSQL_PASSWORD: root
+MYSQL_HOST: mysql-db-container
+MYSQL_PORT: 3306
+MYSQL_DATABASE: securedb
+
+# Server
+CONTAINER_PORT: 8085
+ACTIVE_PROFILE: prod
+
+# Email
+EMAIL_HOST: smtp.gmail.com
+EMAIL_PORT: 587
+EMAIL_USERNAME:
+EMAIL_PASSWORD:
+
+# Verify
+VERIFY_HOST: http://localhost:${CONTAINER_PORT}
+
+# UI
+UI_APP_URL: http://localhost:4200
+
+JWT_SECRET: verysecretkey

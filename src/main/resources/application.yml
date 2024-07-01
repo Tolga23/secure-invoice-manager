@@ -1,5 +1,61 @@
+server:
+  error:
+    path: /user/error
+    whitelabel:
+      enabled: false
+  port: ${CONTAINER_PORT:8080}
+
 spring:
   profiles:
-    active: @spring.profiles.active@
+    active: ${ACTIVE_PROFILE:dev}
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+    password: ${MYSQL_PASSWORD}
+    username: ${MYSQL_USERNAME}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+        format_sql: true
+  sql:
+    init:
+      mode: never
+      continue-on-error: false
+  security:
+    user:
+      name: root
+      password: root
+  mail:
+    host: ${EMAIL_HOST}
+    port: ${EMAIL_PORT}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          write:
+            timeout: 3000
+          connection:
+            timeout: 3000
+          timeout: 3000
+          auth: true
+          starttls:
+            enable: true
+            required: true
+  verify:
+    host: ${VERIFY_HOST}
 
+ui:
+  app:
+    url: ${UI_APP_URL}
 
+jwt.secret: ${JWT_SECRET}
+  
+
+# docker run --network mysql-network --name secureinvoice-container -p 8080:8080 -d secureinvoice
